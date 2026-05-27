@@ -11,7 +11,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+            // Registrar o VendedorRepository para injeção de dependência
+            $this->app->bind(
+                \App\Repositories\Contracts\VendedorRepositoryInterface::class,
+                \App\Repositories\Eloquent\VendedorRepository::class
+            );
     }
 
     /**
