@@ -1,0 +1,81 @@
+/* =========================================
+   ARQUIVO DE ESTILOS: metas.css
+   Aqui ficam as cores, fontes e espaçamentos.
+   Para mudar as cores da Amoedo no futuro, mexa aqui!
+========================================= */
+
+/* --- 1. BARRA DE NAVEGAÇÃO SUPERIOR (NAVBAR) --- */
+.navbar-custom {
+    background-color: #ffc107; /* FUNDO DA BARRA: Amarelo Amoedo */
+    margin-bottom: 1.5rem;     /* Espaço abaixo da barra */
+}
+
+.brand-custom {
+    font-weight: bold;         /* Título em negrito */
+    display: flex;
+    align-items: center;       /* Alinha a logo com o texto */
+    color: #ffffff;               /* COR DO TEXTO DO TÍTULO: Preto */
+}
+
+.brand-logo {
+    height: 40px;              /* Tamanho da imagem da logo */
+    margin-right: 1rem;        /* Espaço entre a logo e o título */
+    border-radius: 0.25rem;    /* Arredonda levemente as pontas da logo */
+}
+
+.user-status {
+    color: #000;               /* COR DO TEXTO "Usuário Conectado": Preto */
+    font-weight: bold;             /* Negrito */
+}
+
+.badge-role {
+    background-color: #000;    /* FUNDO DA ETIQUETA DE CARGO: Preto */
+    color: #fff;               /* COR DO TEXTO DA ETIQUETA: Branco */
+    margin-left: 0.5rem;       /* Espaço entre o nome e a etiqueta */
+}
+
+/* --- 2. CARDS (As caixas brancas onde ficam os filtros e a tabela) --- */
+.card-custom {
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Sombra levinha */
+    border: none;              /* Tira a borda dura padrão */
+}
+
+/* Título da caixa de Filtros */
+.card-header-filters {
+    background-color: #ffffff; /* FUNDO: Cinza Escuro */
+    color: #dd3647;                /* TEXTO: Branco */
+    font-weight: bold;
+}
+
+/* Título da caixa de Resultados (Vendedores Encontrados) */
+.card-header-results {
+    background-color: #ffffff; /* FUNDO: Amarelo Amoedo */
+    color: #dd3647;            /* TEXTO: Vermelho */
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between; /* Joga o total para o canto direito */
+    align-items: center;
+}
+
+/* --- 3. TABELA DE RESULTADOS --- */
+.table-header-custom th {
+    background-color: #ffffff; /* FUNDO DO CABEÇALHO DA TABELA: Escuro */
+    color: #fff;               /* TEXTO: Branco */
+}
+
+/* --- 4. ÁREA DOS BOTÕES (Rodapé da Tabela) --- */
+.footer-actions {
+    padding: 1rem;             /* Espaçamento interno */
+    text-align: right;         /* Joga o botão de salvar para a direita */
+    background-color: #f8f9fa; /* FUNDO: Cinza bem clarinho */
+    border-top: 1px solid #dee2e6; /* Linha separando a tabela do botão */
+}
+
+.btn-action {
+    padding: 0.375rem 3rem;    /* Deixa o botão mais larguinho */
+    font-weight: bold;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Sombra no botão */
+    background-color: #ffc107;  /* Cores do botão de salvar alterações */
+    color: #dd3647;  
+}

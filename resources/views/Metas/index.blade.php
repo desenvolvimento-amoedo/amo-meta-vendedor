@@ -1,0 +1,183 @@
+{{-- resources/views/metas/index.blade.php --}}
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Definição de Metas de Vendedores</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('css/metas.css') }}" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-custom">
+        <div class="container">
+            <a class="navbar-brand brand-custom" href="#">
+                <img src="{{ asset('images/amo_amarelo.png') }}" alt="Logo Amoedo" class="brand-logo">
+                Gestão de Metas Internas
+            </a>
+
+            <span class="user-status">
+                Usuário Conectado: <strong>{{ $userContext['username'] }}</strong>
+                <span class="badge badge-role">
+                    {{ $userContext['is_admin'] ? 'Administrador' : 'Gerente (CODSUP: '.$userContext['codsup'].')' }}
+                </span>
+            </span>
+        </div>
+    </nav>
+    <div class="container mb-5">
+
+        @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <strong>Sucesso!</strong> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        @endif
+
+        @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <strong>Atenção!</strong> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        @endif
+        <div class="card card-custom">
+            <div class="card-header card-header-filters">Filtros de Seleção</div>
+            <div class="card-body">
+                <form method="GET" action="{{ route('metas.index') }}" id="form-filtros">
+                    <div class="row g-3">
+
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Ano</label>
+                            <select name="ano" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+                                @for($i = date('Y') - 1; $i <= date('Y') + 1; $i++)
+                                    <option value="{{ $i }}" {{ $filtros['ano'] == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                    @endfor
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Mês</label>
+                            <select name="mes" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+                                @for($m = 1; $m <= 12; $m++)
+                                    <option value="{{ $m }}" {{ $filtros['mes'] == $m ? 'selected' : '' }}>
+                                    {{ str_pad($m, 2, '0', STR_PAD_LEFT) }}
+                                    </option>
+                                    @endfor
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Filial</label>
+                            <select name="codfil" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+                                <option value="">-- Selecione a Filial --</option>
+                                @foreach($listas['filiais'] as $filial)
+                                <option value="{{ $filial->CODFIL }}" {{ $filtros['codfil'] == $filial->CODFIL ? 'selected' : '' }}>
+                                    {{ $filial->CODFIL }} - {{ $filial->FANTASIA }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Gerente</label>
+                            @if($userContext['is_admin'])
+                            <select name="codsup" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+                                <option value="">-- Todos os Gerentes --</option>
+                                @foreach($listas['gerentes'] as $gerente)
+                                <option value="{{ $gerente->CODSUP }}" {{ $filtros['codsup'] == $gerente->CODSUP ? 'selected' : '' }}>
+                                    Supervisão: {{ $gerente->CODSUP }}
+                                </option>
+                                @endforeach
+                            </select>
+                            @else
+                            <input type="text" class="form-control bg-light" value="Supervisão: {{ $userContext['codsup'] }}" disabled>
+                            <input type="hidden" name="codsup" value="{{ $userContext['codsup'] }}">
+                            @endif
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+        @if(count($vendedores) > 0)
+        <div class="card card-custom">
+            <div class="card-header card-header-results">
+                <span>Vendedores Encontrados</span>
+                <span class="badge bg-light text-primary">Total: {{ count($vendedores) }}</span>
+            </div>
+
+            <div class="card-body p-0">
+                <form method="POST" action="{{ route('metas.store') }}">
+                    @csrf
+                    <input type="hidden" name="ano" value="{{ $filtros['ano'] }}">
+                    <input type="hidden" name="mes" value="{{ $filtros['mes'] }}">
+                    <input type="hidden" name="codfil" value="{{ $filtros['codfil'] }}">
+                    <input type="hidden" name="codsup" value="{{ $filtros['codsup'] }}">
+
+                    @php
+                    $anoAtual = (int) date('Y');
+                    $mesAtual = (int) date('m');
+                    $bloquearEdicao = ($filtros['ano'] < $anoAtual || ($filtros['ano']==$anoAtual && $filtros['mes'] < $mesAtual));
+                        @endphp
+
+                        <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0 align-middle">
+                            <thead class="table-header-custom">
+                                <tr>
+                                    <th style="width: 15%;">Cód. Vendedor</th>
+                                    <th style="width: 45%;">Nome do Vendedor</th>
+                                    <th style="width: 15%;">Cód. Filial</th>
+                                    <th style="width: 25%;">Meta Definida (R$)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($vendedores as $vendedor)
+                                <tr>
+                                    <td class="fw-bold">{{ $vendedor->CODVENDR }}</td>
+                                    <td>{{ $vendedor->NOME }}</td>
+                                    <td><span class="badge bg-secondary">{{ $vendedor->CODFIL }}</span></td>
+                                    <td>
+                                        <input type="hidden" name="metas[{{ $vendedor->CODVENDR }}][codfil]" value="{{ $vendedor->CODFIL }}">
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" step="0.01" min="0" class="form-control"
+                                                name="metas[{{ $vendedor->CODVENDR }}][meta]"
+                                                value="{{ $vendedor->META }}" placeholder="0,00"
+                                                {{ $bloquearEdicao ? 'disabled' : '' }}>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+            </div>
+
+            <div class="footer-actions">
+                @if(!$bloquearEdicao)
+                <button type="submit" class="btn btn-success btn-action">Salvar Alterações</button>
+                @else
+                <button type="button" class="btn btn-secondary btn-action" disabled>Mês Fechado</button>
+                @endif
+            </div>
+            </form>
+        </div>
+    </div>
+    @else
+    <div class="alert alert-info shadow-sm border-0" role="alert">
+        💡 <strong>Instrução:</strong>
+        @if($userContext['is_admin'])
+        Selecione uma <strong>Filial</strong> ou um <strong>Gerente</strong> nos filtros acima para listar os vendedores e gerenciar as metas.
+        @else
+        Selecione uma <strong>Filial</strong> para filtrar os seus vendedores sob sua supervisão.
+        @endif
+    </div>
+    @endif
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
