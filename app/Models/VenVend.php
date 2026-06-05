@@ -11,10 +11,11 @@ class VenVend extends Model
      public $timestamps = false; // Desativa os timestamps automáticos
 
     protected $fillable = [
-        'CODFIL',
+        'CODFILRH',
         'CODVENDR',
         'NOME',
-        'CODSUP'
+        'CODSUP',
+        'TPVENDR'
     ];
 
         public function metas()

@@ -7,66 +7,107 @@ use App\Repositories\Contracts\VendedorRepositoryInterface;
 
 class VendedorRepository implements VendedorRepositoryInterface
 {
-    
-     // Busca as filiais. Se for gerente, traz apenas as filiais onde ele tem vendedores vinculados.
-     
-    public function getFiliaisDisponiveis(bool $isAdmin, ?int $codsup)
+    /**
+     * Busca as filiais disponíveis no Gemco.
+     */
+    public function getFiliaisDisponiveis(bool $isAdmin, ?int $codgerente)
     {
-        $query = DB::table('CAD_FILIAL')
-            ->join('VEN_VEND', 'CAD_FILIAL.CODFIL', '=', 'VEN_VEND.CODFIL')
+        $query = DB::connection('sqlsrv_gemco')->table('CAD_FILIAL')
             ->select('CAD_FILIAL.CODFIL', 'CAD_FILIAL.FANTASIA')
             ->distinct();
 
-        if (!$isAdmin && $codsup) {
-            $query->where('VEN_VEND.CODSUP', $codsup);
+        if (!$isAdmin && $codgerente) {
+            $query->join('VEN_VEND', 'CAD_FILIAL.CODFIL', '=', 'VEN_VEND.CODFILRH')
+                  ->where('VEN_VEND.CODVENDR', (int) $codgerente);
         }
-
+          
         return $query->orderBy('CAD_FILIAL.FANTASIA')->get();
     }
 
-    
-    // Busca os gerentes (CODSUP). Se for gerente, retorna apenas ele mesmo.
-    public function getGerentesDisponiveis(bool $isAdmin, ?int $codsup)
+    /**
+     * Busca os gerentes 
+     */
+    public function getGerentesDisponiveis(bool $isAdmin, ?int $codvendr)
     {
-        $query = DB::table('VEN_VEND')
-            ->select('CODSUP')
-            ->whereNotNull('CODSUP')
-            ->distinct();
-
-        if (!$isAdmin && $codsup) {
-            $query->where('CODSUP', $codsup);
-        }
-
-        return $query->orderBy('CODSUP')->get();
-    }
-
-    
-     // Traz os vendedores aplicando os filtros de tela e trazendo junto a meta (se houver).
-     
-    public function getVendedoresComMetas(int $ano, int $mes, ?int $codfil, ?int $codsup)
-    {
-        $query = DB::table('VEN_VEND')
-            ->leftJoin('AMO_META', function ($join) use ($ano, $mes) {
-                $join->on('VEN_VEND.CODVENDR', '=', 'AMO_META.CODVENDR')
-                     ->where('AMO_META.ANO', '=', $ano)
-                     ->where('AMO_META.MES', '=', $mes);
-            })
+        $query = DB::connection('sqlsrv_gemco')->table('VEN_VEND as v')
+            ->join('SEG_USER as s', 'v.CODVENDR', '=', 's.CODVENDR')
             ->select(
-                'VEN_VEND.CODVENDR', 
-                'VEN_VEND.NOME', 
-                'VEN_VEND.CODFIL', 
-                'VEN_VEND.CODSUP', 
-                'AMO_META.META'
-            );
+                'v.CODVENDR as CODSUP', // Apelidado para a View encontrar como $gerente->CODSUP
+                'v.NOME as NOME',       
+                'v.CODFILRH as CODFIL'  
+            )
+            ->distinct()
+            ->whereNull('v.CODSUP')
+            ->where('v.STATUS', '<>', 9)
+            ->whereNotIn('v.CODFILRH', [9, 14])
+            ->where('s.CODSETOR', 105);
 
+        if (!$isAdmin && $codvendr) {
+            $query->where('v.CODVENDR', (int) $codvendr);
+        }
+
+        return $query->orderBy('v.NOME')->get();
+    }
+    
+    /**
+     * Busca os vendedores baseando-se na Filial de RH do gerente selecionado.
+     */
+    public function getVendedoresComMetas(int $ano, int $mes, ?int $codfil, ?int $codvendr)
+    {
+        // 1. Busca os vendedores aplicando estritamente as regras da query pura
+        $query = DB::connection('sqlsrv_gemco')->table('VEN_VEND as v')
+            ->select( 
+                'v.CODVENDR',
+                'v.NOME as NOME',        
+                'v.CODFILRH as CODFIL',  
+                'v.CODSUP'
+            )
+            ->distinct()
+            ->whereNotNull('v.CODSUP')
+            ->where('v.STATUS', '<>', 9)
+            ->where('v.TPVENDR', 4) // Mantém o filtro para isolar os ATD
+            ->whereNotIn('v.CODFILRH', [9, 14]);
+            
+        // Se o usuário selecionou uma Filial diretamente no combo de filiais
         if ($codfil) {
-            $query->where('VEN_VEND.CODFIL', $codfil);
+            $query->where('v.CODFILRH', $codfil);
         }
 
-        if ($codsup) {
-            $query->where('VEN_VEND.CODSUP', $codsup);
+        // Se o usuário selecionar um Gerente, descobrimos a Filial de RH desse gerente
+        // e filtramos os vendedores que pertencem a ela.
+        if ($codvendr) {
+            $filialDoGerente = DB::connection('sqlsrv_gemco')->table('VEN_VEND')
+                ->where('CODVENDR', (int) $codvendr)
+                ->value('CODFILRH');
+
+            if ($filialDoGerente) {
+                $query->where('v.CODFILRH', $filialDoGerente);
+            }
         }
 
-        return $query->orderBy('VEN_VEND.NOME')->get();
+        // Executa a busca dos vendedores com os filtros aplicados
+        $vendedores = $query->orderBy('v.CODVENDR')->get();
+
+        if ($vendedores->isEmpty()) {
+            return $vendedores;
+        }
+
+        // 2. Extrai os IDs dos vendedores para buscar as metas
+        $codigosVendedores = $vendedores->pluck('CODVENDR')->toArray();
+
+        // 3. Busca as metas usando a conexão do seu .env (sqlsrv)
+        $metas = DB::connection('sqlsrv')->table('AMO_META')
+            ->where('ANO', $ano)
+            ->where('MES', $mes)
+            ->whereIn('CODVENDR', $codigosVendedores)
+            ->pluck('META', 'CODVENDR') 
+            ->toArray();
+
+        // 4. Une os dados manualmente antes de enviar para a View
+        foreach ($vendedores as $vendedor) {
+            $vendedor->META = $metas[$vendedor->CODVENDR] ?? null;
+        }
+
+        return $vendedores;
     }
 }

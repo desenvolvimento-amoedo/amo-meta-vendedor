@@ -20,9 +20,9 @@
             </a>
 
             <span class="user-status">
-                Usuário Conectado: <strong>{{ $userContext['username'] }}</strong>
+                Usuário Conectado: <strong>{{ $userContext['username'] ?? 'Usuário' }}</strong>
                 <span class="badge badge-role">
-                    {{ $userContext['is_admin'] ? 'Administrador' : 'Gerente (CODSUP: '.$userContext['codsup'].')' }}
+                    {{ ($userContext['is_admin'] ?? false) ? 'Administrador' : 'Gerente (CODSUP: '.($userContext['codsup'] ?? '').')' }}
                 </span>
             </span>
         </div>
@@ -42,58 +42,54 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         @endif
+        
         <div class="card card-custom">
             <div class="card-header card-header-filters">Filtros de Seleção</div>
             <div class="card-body">
                 <form method="GET" action="{{ route('metas.index') }}" id="form-filtros">
                     <div class="row g-3">
 
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">Ano</label>
                             <select name="ano" class="form-select" onchange="document.getElementById('form-filtros').submit()">
                                 @for($i = date('Y') - 1; $i <= date('Y') + 1; $i++)
-                                    <option value="{{ $i }}" {{ $filtros['ano'] == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                    @endfor
-                            </select>
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold">Mês</label>
-                            <select name="mes" class="form-select" onchange="document.getElementById('form-filtros').submit()">
-                                @for($m = 1; $m <= 12; $m++)
-                                    <option value="{{ $m }}" {{ $filtros['mes'] == $m ? 'selected' : '' }}>
-                                    {{ str_pad($m, 2, '0', STR_PAD_LEFT) }}
-                                    </option>
-                                    @endfor
+                                    <option value="{{ $i }}" {{ ($filtros['ano'] ?? date('Y')) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                @endfor
                             </select>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Filial</label>
-                            <select name="codfil" class="form-select" onchange="document.getElementById('form-filtros').submit()">
-                                <option value="">-- Selecione a Filial --</option>
-                                @foreach($listas['filiais'] as $filial)
-                                <option value="{{ $filial->CODFIL }}" {{ $filtros['codfil'] == $filial->CODFIL ? 'selected' : '' }}>
-                                    {{ $filial->CODFIL }} - {{ $filial->FANTASIA }}
-                                </option>
-                                @endforeach
+                            <label class="form-label fw-semibold">Mês</label>
+                            <select name="mes" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+                                @for($m = 1; $m <= 12; $m++)
+                                    <option value="{{ $m }}" {{ ($filtros['mes'] ?? date('m')) == $m ? 'selected' : '' }}>
+                                    {{ str_pad($m, 2, '0', STR_PAD_LEFT) }}
+                                    </option>
+                                @endfor
                             </select>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Gerente</label>
-                            @if($userContext['is_admin'])
-                            <select name="codsup" class="form-select" onchange="document.getElementById('form-filtros').submit()">
-                                <option value="">-- Todos os Gerentes --</option>
-                                @foreach($listas['gerentes'] as $gerente)
-                                <option value="{{ $gerente->CODSUP }}" {{ $filtros['codsup'] == $gerente->CODSUP ? 'selected' : '' }}>
-                                    Supervisão: {{ $gerente->CODSUP }}
-                                </option>
-                                @endforeach
-                            </select>
+                            @if($userContext['is_admin'] ?? false)
+                           <select name="codsup" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+    <option value="">-- Todos os Gerentes --</option>
+    @foreach(($listas['gerentes'] ?? []) as $gerente)
+        @php
+
+            $codigoGerente = $gerente->CODSUP ?? $gerente->codsup ?? $gerente->CODGERENTE ?? $gerente->id ?? null;
+        @endphp
+        
+        @if($codigoGerente)
+            <option value="{{ $codigoGerente }}" {{ ($filtros['codsup'] ?? '') == $codigoGerente ? 'selected' : '' }}>
+                {{ $gerente->NOME ?? $gerente->NOME_GERENTE ?? $gerente->NOMESUP ?? 'Gerente ('.$codigoGerente.')' }}
+            </option>
+        @endif
+    @endforeach
+</select>
                             @else
-                            <input type="text" class="form-control bg-light" value="Supervisão: {{ $userContext['codsup'] }}" disabled>
-                            <input type="hidden" name="codsup" value="{{ $userContext['codsup'] }}">
+                            <input type="text" class="form-control bg-light" value="Supervisão: {{ $userContext['codsup'] ?? '' }}" disabled>
+                            <input type="hidden" name="codsup" value="{{ $userContext['codsup'] ?? '' }}">
                             @endif
                         </div>
 
@@ -101,7 +97,8 @@
                 </form>
             </div>
         </div>
-        @if(count($vendedores) > 0)
+
+        @if(!empty($vendedores) && (is_array($vendedores) || is_object($vendedores)) && count($vendedores) > 0)
         <div class="card card-custom">
             <div class="card-header card-header-results">
                 <span>Vendedores Encontrados</span>
@@ -111,18 +108,20 @@
             <div class="card-body p-0">
                 <form method="POST" action="{{ route('metas.store') }}">
                     @csrf
-                    <input type="hidden" name="ano" value="{{ $filtros['ano'] }}">
-                    <input type="hidden" name="mes" value="{{ $filtros['mes'] }}">
-                    <input type="hidden" name="codfil" value="{{ $filtros['codfil'] }}">
-                    <input type="hidden" name="codsup" value="{{ $filtros['codsup'] }}">
+                    <input type="hidden" name="ano" value="{{ $filtros['ano'] ?? date('Y') }}">
+                    <input type="hidden" name="mes" value="{{ $filtros['mes'] ?? date('m') }}">
+                    <input type="hidden" name="codfil" value="{{ $filtros['codfil'] ?? '' }}">
+                    <input type="hidden" name="codsup" value="{{ $filtros['codsup'] ?? '' }}">
 
                     @php
                     $anoAtual = (int) date('Y');
                     $mesAtual = (int) date('m');
-                    $bloquearEdicao = ($filtros['ano'] < $anoAtual || ($filtros['ano']==$anoAtual && $filtros['mes'] < $mesAtual));
-                        @endphp
+                    $anoFiltro = (int) ($filtros['ano'] ?? $anoAtual);
+                    $mesFiltro = (int) ($filtros['mes'] ?? $mesAtual);
+                    $bloquearEdicao = ($anoFiltro < $anoAtual || ($anoFiltro == $anoAtual && $mesFiltro < $mesAtual));
+                    @endphp
 
-                        <div class="table-responsive">
+                    <div class="table-responsive">
                         <table class="table table-striped table-hover mb-0 align-middle">
                             <thead class="table-header-custom">
                                 <tr>
@@ -133,7 +132,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($vendedores as $vendedor)
+                                @foreach(($vendedores ?? []) as $vendedor)
                                 <tr>
                                     <td class="fw-bold">{{ $vendedor->CODVENDR }}</td>
                                     <td>{{ $vendedor->NOME }}</td>
@@ -152,28 +151,28 @@
                                 @endforeach
                             </tbody>
                         </table>
-            </div>
+                    </div>
 
-            <div class="footer-actions">
-                @if(!$bloquearEdicao)
-                <button type="submit" class="btn btn-success btn-action">Salvar Alterações</button>
-                @else
-                <button type="button" class="btn btn-secondary btn-action" disabled>Mês Fechado</button>
-                @endif
+                    <div class="footer-actions">
+                        @if(!$bloquearEdicao)
+                       <button type="button" class="btn btn-warning">Salvar Alterações</button>
+                        @else
+                        <button type="button" class="btn btn-secondary btn-action" disabled>Mês Fechado</button>
+                        @endif
+                    </div>
+                </form>
             </div>
-            </form>
         </div>
-    </div>
-    @else
-    <div class="alert alert-info shadow-sm border-0" role="alert">
-        💡 <strong>Instrução:</strong>
-        @if($userContext['is_admin'])
-        Selecione uma <strong>Filial</strong> ou um <strong>Gerente</strong> nos filtros acima para listar os vendedores e gerenciar as metas.
         @else
-        Selecione uma <strong>Filial</strong> para filtrar os seus vendedores sob sua supervisão.
+        <div class="alert alert-info shadow-sm border-0" role="alert">
+            💡 <strong>Instrução:</strong>
+            @if($userContext['is_admin'] ?? false)
+            Selecione uma <strong>Filial</strong> ou um <strong>Gerente</strong> nos filtros acima para listar os vendedores e gerenciar as metas.
+            @else
+            Selecione uma <strong>Filial</strong> para filtrar os seus vendedores sob sua supervisão.
+            @endif
+        </div>
         @endif
-    </div>
-    @endif
 
     </div>
 

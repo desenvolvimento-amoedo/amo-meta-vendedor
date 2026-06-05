@@ -12,12 +12,14 @@ class AMO_META extends Model
     public $timestamps = false; // Desativa os timestamps automáticos
 
     protected $fillable = [
+        'CODGERENTE',
         'CODVENDR',
-        'CODFIL',
+        'CODFILRH',
         'ANO',
         'MES',
         'META',
-        'DATA_CADASTRO'
+        'DATA_CADASTRO',
+        'DESCRICAO'
     ];
 
             public function vendedor()

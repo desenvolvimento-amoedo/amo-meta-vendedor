@@ -28,14 +28,14 @@ class MetaController extends Controller
 
         // Busca as listas que vão preencher os selects (Filiais e Gerentes permitidos)
         $listas = $this->metaService->obterFiltrosDeAcesso($userContext);
-
+        
         // Regra de Fluxo: Só busca os vendedores se houver algum filtro de busca selecionado,
         // OU se o usuário for um gerente comum (que já entra com o filtro do seu próprio CODSUP)
         $vendedores = [];
         if ($filtros['codfil'] || $filtros['codsup'] || !$userContext['is_admin']) {
             $vendedores = $this->metaService->listarVendedores($userContext, $filtros);
         }
-
+  
         // Retorna a view enviando o contexto do usuário, os filtros aplicados e as listagens
         return view('metas.index', compact('userContext', 'filtros', 'listas', 'vendedores'));
     }
@@ -49,7 +49,8 @@ class MetaController extends Controller
         $request->validate([
             'ano'   => 'required|integer',
             'mes'   => 'required|integer',
-            'metas' => 'required|array'
+            'meta' => 'required|array',
+            'meta.*.codgerente' => 'required|integer'
         ]);
 
         // TRAVA DE SEGURANÇA: Impede alteração de meses anteriores
@@ -65,18 +66,16 @@ class MetaController extends Controller
         try {
             // Tenta salvar as metas
             $this->metaService->salvarMetasEmLote(
-                $request->input('metas'),
+                $request->input('meta'),
                 $request->input('ano'),
-                $request->input('mes')
+                $request->input('mes'),
             );
 
             // Se der tudo certo, redireciona com sucesso
             return redirect()->route('metas.index', $request->only('ano', 'mes', 'codfil', 'codsup'))
                 ->with('success', 'Metas processadas e salvas com sucesso!');
-        } catch (\InvalidArgumentException $e) {
-            // SE der o erro da meta vazia no Service, ele cai aqui!
-            // Volta para a tela anterior exibindo a mensagem de erro que você criou
-            return redirect()->back()->with('error', $e->getMessage());
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Falha ao salvar metas: ' . $e->getMessage());
         }
     }
 }

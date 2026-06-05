@@ -32,7 +32,7 @@ class MetaService
             $filtros['ano'],
             $filtros['mes'],
             $filtros['codfil'],
-            $codsup
+            $codsup 
         );
     }
 
@@ -44,24 +44,19 @@ class MetaService
         DB::transaction(function () use ($dados, $ano, $mes) {
             foreach ($dados as $codvendr => $valores) {
 
-                // Se o campo de meta não for preenchido, lança uma exceção para evitar salvar um valor vazio no banco
-
-                if (empty($valores['meta'])) { 
-                    throw new \InvalidArgumentException("Meta não pode ser vazia para o vendedor $codvendr.");
-                }
-
                 // Converte para o formato de moeda BR (Ex: 1.500,50 para 1500.50) se necessário
-                $metaFormatada = str_replace(['.', ','], ['', '.'], $valores['meta']);
+                $metaFormatada = isset($valores['meta']) ? str_replace(['.', ','], ['', '.'], $valores['meta']) : null;
 
-                 \App\Models\AMO_META::updateOrCreate(
-                 [
+                \App\Models\AMO_META::updateOrCreate(
+                    [
                         'CODVENDR' => $codvendr,
                         'ANO' => $ano,
                         'MES' => $mes,
                     ],
                     [
-                        'CODFIL' => $valores['codfil'],
-                        'META' => (float) $metaFormatada
+                        'CODFILRH' => $valores['codfil'],
+                        'META' => $metaFormatada ? (float) $metaFormatada : null, // Converte para float ou seta null se vazio
+                        'CODGERENTE' => $valores['codgerente'],
                     ]
                 );
             }
