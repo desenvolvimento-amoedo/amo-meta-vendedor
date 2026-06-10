@@ -14,7 +14,7 @@
     font-weight: bold;         /* Título em negrito */
     display: flex;
     align-items: center;       /* Alinha a logo com o texto */
-    color: #ffffff;               /* COR DO TEXTO DO TÍTULO: Preto */
+    color: #ffffff;               /* COR DO TEXTO DO TÍTULO: Branco */
 }
 
 .brand-logo {
@@ -24,7 +24,7 @@
 }
 
 .user-status {
-    color: #000;               /* COR DO TEXTO "Usuário Conectado": Preto */
+    color: #ffffff;               /* COR DO TEXTO "Usuário Conectado": Branco */
     font-weight: bold;             /* Negrito */
 }
 
@@ -43,16 +43,16 @@
 
 /* Título da caixa de Filtros */
 .card-header-filters {
-    background-color: #ffffff; /* FUNDO: Cinza Escuro */
-    color: #dd3647;                /* TEXTO: Branco */
+    background-color: #FF0000; /* FUNDO */
+    color: #ffffff;                /* TEXTO */
     font-weight: bold;
 }
 
 /* Título da caixa de Resultados (Vendedores Encontrados) */
 .card-header-results {
-    background-color: #ffffff; /* FUNDO: Amarelo Amoedo */
-    color: #dd3647;            /* TEXTO: Vermelho */
-    font-weight: bold;
+    background-color: #FF0000; /* FUNDO: Amarelo Amoedo */
+    color: #ffffff;            /* TEXTO */
+    font-weight: bold; 
     display: flex;
     justify-content: space-between; /* Joga o total para o canto direito */
     align-items: center;
@@ -60,8 +60,8 @@
 
 /* --- 3. TABELA DE RESULTADOS --- */
 .table-header-custom th {
-    background-color: #ffffff; /* FUNDO DO CABEÇALHO DA TABELA: Escuro */
-    color: #fff;               /* TEXTO: Branco */
+    background-color:#ffffff;/* FUNDO DO CABEÇALHO DA TABELA: Escuro */
+    color: #000000;               /* TEXTO */
 }
 
 /* --- 4. ÁREA DOS BOTÕES (Rodapé da Tabela) --- */
@@ -69,7 +69,7 @@
     padding: 1rem;             /* Espaçamento interno */
     text-align: right;         /* Joga o botão de salvar para a direita */
     background-color: #f8f9fa; /* FUNDO: Cinza bem clarinho */
-    border-top: 1px solid #dee2e6; /* Linha separando a tabela do botão */
+    border-top: 1px solid #b3b6b9; /* Linha separando a tabela do botão */
 }
 
 .btn-success {
@@ -77,5 +77,48 @@
     font-weight: bold;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Sombra no botão */
     background-color: #ffc107;  /* Cores do botão de salvar alterações */
-    color: #dd3647;  
+    color: #000000;  
+}
+
+/* ---BOTÃO DE TRANSIÇÃO --- */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #ffc107; /* Cor do fundo do switch quando ativado: Amarelo Amoedo */
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
 }

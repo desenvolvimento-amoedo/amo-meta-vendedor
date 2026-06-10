@@ -20,4 +20,5 @@ Route::middleware(['corporate.auth'])->group(function () {
 
     // Rota de envio do formulário: Salva as metas preenchidas em lote (updateOrCreate)
     Route::post('/metas', [MetaController::class, 'store'])->name('metas.store');
+
 });

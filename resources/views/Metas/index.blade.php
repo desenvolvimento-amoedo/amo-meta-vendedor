@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Definição de Metas de Vendedores</title>
+    <title>Metas de Vendedores</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ asset('css/metas.css') }}" rel="stylesheet">
 </head>
@@ -16,7 +16,7 @@
         <div class="container">
             <a class="navbar-brand brand-custom" href="#">
                 <img src="{{ asset('images/amo_amarelo.png') }}" alt="Logo Amoedo" class="brand-logo">
-                Gestão de Metas Internas
+                Gestão de Metas dos Vendedores
             </a>
 
             <span class="user-status">
@@ -34,15 +34,13 @@
             <strong>Sucesso!</strong> {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        @endif
-
-        @if(session('error'))
+        @endif @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
             <strong>Atenção!</strong> {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         @endif
-        
+
         <div class="card card-custom">
             <div class="card-header card-header-filters">Filtros de Seleção</div>
             <div class="card-body">
@@ -54,7 +52,7 @@
                             <select name="ano" class="form-select" onchange="document.getElementById('form-filtros').submit()">
                                 @for($i = date('Y') - 1; $i <= date('Y') + 1; $i++)
                                     <option value="{{ $i }}" {{ ($filtros['ano'] ?? date('Y')) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
+                                    @endfor
                             </select>
                         </div>
 
@@ -65,28 +63,28 @@
                                     <option value="{{ $m }}" {{ ($filtros['mes'] ?? date('m')) == $m ? 'selected' : '' }}>
                                     {{ str_pad($m, 2, '0', STR_PAD_LEFT) }}
                                     </option>
-                                @endfor
+                                    @endfor
                             </select>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Gerente</label>
                             @if($userContext['is_admin'] ?? false)
-                           <select name="codsup" class="form-select" onchange="document.getElementById('form-filtros').submit()">
-    <option value="">-- Todos os Gerentes --</option>
-    @foreach(($listas['gerentes'] ?? []) as $gerente)
-        @php
+                                                    <select name="codsup" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+                            <option value="">Todos os Gerentes</option>
+                            @foreach(($listas['gerentes'] ?? []) as $gerente)
+                                @php
 
-            $codigoGerente = $gerente->CODSUP ?? $gerente->codsup ?? $gerente->CODGERENTE ?? $gerente->id ?? null;
-        @endphp
-        
-        @if($codigoGerente)
-            <option value="{{ $codigoGerente }}" {{ ($filtros['codsup'] ?? '') == $codigoGerente ? 'selected' : '' }}>
-                {{ $gerente->NOME ?? $gerente->NOME_GERENTE ?? $gerente->NOMESUP ?? 'Gerente ('.$codigoGerente.')' }}
-            </option>
-        @endif
-    @endforeach
-</select>
+                                    $codigoGerente = $gerente->CODSUP ?? $gerente->codsup ?? $gerente->CODGERENTE ?? $gerente->id ?? null;
+                                @endphp
+                                
+                                @if($codigoGerente)
+                                    <option value="{{ $codigoGerente }}" {{ ($filtros['codsup'] ?? '') == $codigoGerente ? 'selected' : '' }}>
+                                        {{ $gerente->NOME ?? $gerente->NOME_GERENTE ?? $gerente->NOMESUP ?? 'Gerente ('.$codigoGerente.')' }}
+                                    </option>
+                                @endif
+                            @endforeach
+                            </select>
                             @else
                             <input type="text" class="form-control bg-light" value="Supervisão: {{ $userContext['codsup'] ?? '' }}" disabled>
                             <input type="hidden" name="codsup" value="{{ $userContext['codsup'] ?? '' }}">
@@ -125,10 +123,12 @@
                         <table class="table table-striped table-hover mb-0 align-middle">
                             <thead class="table-header-custom">
                                 <tr>
-                                    <th style="width: 15%;">Cód. Vendedor</th>
-                                    <th style="width: 45%;">Nome do Vendedor</th>
-                                    <th style="width: 15%;">Cód. Filial</th>
-                                    <th style="width: 25%;">Meta Definida (R$)</th>
+                                    <th style="width: 5%;">CÓDIGO</th>
+                                    <th style="width: 20%;">VENDEDOR</th>
+                                    <th style="width: 5%;">FILIAL</th>
+                                    <th style="width: 15%;">META DEFINIDA (R$)</th>
+                                    <th style="width: 15%;">ALTERAÇÃO</th>
+                                    <th style="width: 25%;">MOTIVO</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -138,41 +138,54 @@
                                     <td>{{ $vendedor->NOME }}</td>
                                     <td><span class="badge bg-secondary">{{ $vendedor->CODFIL }}</span></td>
                                     <td>
-                                        <input type="hidden" name="metas[{{ $vendedor->CODVENDR }}][codfil]" value="{{ $vendedor->CODFIL }}">
+                                        <input type="hidden"
+                                               name="metas[{{ $vendedor->CODVENDR }}][codfil]"
+                                               value="{{ $vendedor->CODFIL }}">
                                         <div class="input-group">
                                             <span class="input-group-text">$</span>
-                                            <input type="number" step="0.01" min="0" class="form-control"
-                                                name="metas[{{ $vendedor->CODVENDR }}][meta]"
-                                                value="{{ $vendedor->META }}" placeholder="0,00"
-                                                {{ $bloquearEdicao ? 'disabled' : '' }}>
+                                            <input type="number" 
+                                                   step="0.01" 
+                                                   min="0"
+                                                   class="form-control"
+                                                   name="metas[{{ $vendedor->CODVENDR }}][meta]" 
+                                                   value="{{ $vendedor->META }}" 
+                                                   placeholder="0,00" {{ $bloquearEdicao ? 'disabled' : '' }}>
                                         </div>
+                                    </td>
+                                      <td>
+                                        <label class="switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="metas[{{ $vendedor->CODVENDR }}][motivo]" 
+                                               value="{{ $vendedor->MOTIVO ?? '' }}" 
+                                               placeholder="Motivo da alteração" {{ $bloquearEdicao ? 'disabled' : '' }}>
                                     </td>
                                 </tr>
                                 @endforeach
                             </tbody>
                         </table>
-                    </div>
-
-                    <div class="footer-actions">
-                        @if(!$bloquearEdicao)
-                       <button type="button" class="btn btn-warning">Salvar Alterações</button>
-                        @else
-                        <button type="button" class="btn btn-secondary btn-action" disabled>Mês Fechado</button>
-                        @endif
-                    </div>
-                </form>
             </div>
+
+            <div class="footer-actions">
+                @if(!$bloquearEdicao)
+                <button type="submit" class="btn btn-success btn-action">Salvar Alterações</button>
+                @else
+                <button type="button" class="btn btn-secondary btn-action" disabled>Mês Fechado</button>
+                @endif
+            </div>
+            </form>
         </div>
-        @else
-        <div class="alert alert-info shadow-sm border-0" role="alert">
-            💡 <strong>Instrução:</strong>
-            @if($userContext['is_admin'] ?? false)
-            Selecione uma <strong>Filial</strong> ou um <strong>Gerente</strong> nos filtros acima para listar os vendedores e gerenciar as metas.
-            @else
-            Selecione uma <strong>Filial</strong> para filtrar os seus vendedores sob sua supervisão.
-            @endif
-        </div>
-        @endif
+    </div>
+    @else
+    <div class="alert alert-info shadow-sm border-0" role="alert">
+        💡 <strong>Instrução:</strong> @if($userContext['is_admin'] ?? false) Selecione uma <strong>Filial</strong> ou um <strong>Gerente</strong> nos filtros acima para listar os vendedores e gerenciar as metas. @else Selecione uma <strong>Filial</strong>        para filtrar os seus vendedores sob sua supervisão. @endif
+    </div>
+    @endif
 
     </div>
 

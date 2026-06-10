@@ -96,7 +96,8 @@ class VendedorRepository implements VendedorRepositoryInterface
         $codigosVendedores = $vendedores->pluck('CODVENDR')->toArray();
 
         // 3. Busca as metas usando a conexão do seu .env (sqlsrv)
-        $metas = DB::connection('sqlsrv')->table('AMO_META')
+        $metas = DB::connection('sqlsrv')
+            ->table('estagio.dbo.AMO_META')
             ->where('ANO', $ano)
             ->where('MES', $mes)
             ->whereIn('CODVENDR', $codigosVendedores)

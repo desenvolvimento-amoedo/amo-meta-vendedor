@@ -128,6 +128,21 @@ return [
             // 'encrypt' => env('DB_GEMCO_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_GEMCO_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
+
+        'sqlsrv_desenvolvimento' => [
+            'driver' => 'sqlsrv',
+            'url' => env('DB_DESENVOLVIMENTO_URL'),
+            'host' => env('DB_DESENVOLVIMENTO_HOST', 'localhost'),
+            'port' => env('DB_DESENVOLVIMENTO_PORT', '1433'),
+            'database' => env('DB_DESENVOLVIMENTO_DATABASE', 'laravel'),
+            'username' => env('DB_DESENVOLVIMENTO_USERNAME', 'root'),
+            'password' => env('DB_DESENVOLVIMENTO_PASSWORD', ''),
+            'charset' => env('DB_DESENVOLVIMENTO_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            // 'encrypt' => env('DB_DESENVOLVIMENTO_ENCRYPT', 'yes'),
+            // 'trust_server_certificate' => env('DB_DESENVOLVIMENTO_TRUST_SERVER_CERTIFICATE', 'false'),
+        ],
     ],
     /*
     |--------------------------------------------------------------------------
