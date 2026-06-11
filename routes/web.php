@@ -13,7 +13,7 @@ use App\Http\Controllers\MetaController;
 |
 */
 
-Route::middleware(['corporate.auth'])->group(function () {
+    Route::middleware(['corporate.auth'])->group(function () {
 
     // Rota da página inicial: Exibe os filtros e a tabela de metas dos vendedores
     Route::get('/', [MetaController::class, 'index'])->name('metas.index');

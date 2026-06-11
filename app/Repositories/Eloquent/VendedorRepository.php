@@ -52,41 +52,54 @@ class VendedorRepository implements VendedorRepositoryInterface
     /**
      * Busca os vendedores baseando-se na Filial de RH do gerente selecionado.
      */
+
     public function getVendedoresComMetas(int $ano, int $mes, ?int $codfil, ?int $codvendr)
-    {
-        // 1. Busca os vendedores aplicando estritamente as regras da query pura
-        $query = DB::connection('sqlsrv_gemco')->table('VEN_VEND as v')
-            ->select( 
-                'v.CODVENDR',
-                'v.NOME as NOME',        
-                'v.CODFILRH as CODFIL',  
-                'v.CODSUP'
-            )
-            ->distinct()
-            ->whereNotNull('v.CODSUP')
-            ->where('v.STATUS', '<>', 9)
-            ->where('v.TPVENDR', 4) // Mantém o filtro para isolar os ATD
-            ->whereNotIn('v.CODFILRH', [9, 14]);
-            
-        // Se o usuário selecionou uma Filial diretamente no combo de filiais
-        if ($codfil) {
-            $query->where('v.CODFILRH', $codfil);
+{
+    // 1. Busca os vendedores aplicando as regras de negócio e tratando as exceções das filiais 5 e 14
+    $query = DB::connection('sqlsrv_gemco')->table('VEN_VEND as v')
+        ->select( 
+            'v.CODVENDR',
+            'v.NOME as NOME',        
+            'v.CODFILRH as CODFIL',  
+            'v.CODSUP',
+            'v.TPVENDR'
+        )
+        ->distinct()
+        ->where('v.STATUS', 0) // Garante apenas funcionários ativos (Status = 0) conforme a sua regra
+        ->whereNotIn('v.CODFILRH', [9]); // Mantém apenas a exclusão da filial 9
+
+    // --- CORREÇÃO RÍGIDA DAS REGRAS DO WHERE ---
+    $query->where(function ($q) {
+        // Regra Geral: Tem que ser vendedor comum (TPVENDR = 4) E ter supervisor cadastrado
+        $q->where(function($sub) {
+            $sub->where('v.TPVENDR', 4)
+                ->whereNotNull('v.CODSUP');
+        })
+        // OU Regra de Exceção da Filial 5: Mostra todos os ativos da filial 5, independente do TPVENDR ou CODSUP
+        ->orWhere('v.CODFILRH', 5);
+    });
+    // --------------------------------------------
+        
+    // Se o usuário selecionou uma Filial diretamente no combo de filiais
+    if ($codfil) {
+        $query->where('v.CODFILRH', $codfil);
+    }
+
+    // Se o usuário selecionar um Gerente, descobrimos a Filial de RH desse gerente
+    if ($codvendr) {
+        $filialDoGerente = DB::connection('sqlsrv_gemco')->table('VEN_VEND')
+            ->where('CODVENDR', (int) $codvendr)
+            ->value('CODFILRH');
+
+        if ($filialDoGerente) {
+            $query->where('v.CODFILRH', $filialDoGerente);
         }
+    }
 
-        // Se o usuário selecionar um Gerente, descobrimos a Filial de RH desse gerente
-        // e filtramos os vendedores que pertencem a ela.
-        if ($codvendr) {
-            $filialDoGerente = DB::connection('sqlsrv_gemco')->table('VEN_VEND')
-                ->where('CODVENDR', (int) $codvendr)
-                ->value('CODFILRH');
+    // Executa a busca dos vendedores com os filtros aplicados
+    $vendedores = $query->orderBy('v.CODVENDR')->get();
 
-            if ($filialDoGerente) {
-                $query->where('v.CODFILRH', $filialDoGerente);
-            }
-        }
-
-        // Executa a busca dos vendedores com os filtros aplicados
-        $vendedores = $query->orderBy('v.CODVENDR')->get();
+    // ... (o restante do método com o pluck de metas e o foreach continua EXATAMENTE IGUAL ao seu original)
 
         if ($vendedores->isEmpty()) {
             return $vendedores;
@@ -95,7 +108,7 @@ class VendedorRepository implements VendedorRepositoryInterface
         // 2. Extrai os IDs dos vendedores para buscar as metas
         $codigosVendedores = $vendedores->pluck('CODVENDR')->toArray();
 
-        // 3. Busca as metas usando a conexão do seu .env (sqlsrv)
+        // 3. Busca as metas dos vendedores encontrados para o período selecionado
         $metas = DB::connection('sqlsrv')
             ->table('estagio.dbo.AMO_META')
             ->where('ANO', $ano)

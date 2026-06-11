@@ -40,8 +40,7 @@ class MetaService
     }
 
     // Gera as metas sugeridas para um determinado mês/ano/filial, usando a procedure armazenada
-   // Gera as metas sugeridas para um determinado mês/ano/filial, usando a procedure armazenada
-// Gera as metas sugeridas para um determinado mês/ano, usando a procedure armazenada
+
 public function gerarMetasSugeridas(int $ano, int $mes): void
 {
     // 1. Instância do PDO para rodar a procedure ignorando os retornos das tabelas temporárias
@@ -61,42 +60,58 @@ public function gerarMetasSugeridas(int $ano, int $mes): void
         return;
     }
 
-    // 2. Agrupamos a execução em uma única Transação para máxima performance
-    DB::transaction(function () use ($dados, $ano, $mes) {
-        foreach ($dados as $item) {
-            $codvendr = $item->CODVENDR ?? $item->codvendr ?? null;
-            $codfilrh = $item->CODFILRH ?? $item->codfilrh ?? null;
-            $sugerido = $item->SUGERIDO ?? $item->sugerido ?? null;
+        
+        DB::transaction(function () use ($dados, $ano, $mes) {
+            foreach ($dados as $item) {
+                $codvendr = $item->CODVENDR ?? $item->codvendr ?? null;
+                $codfilrh = $item->CODFILRH ?? $item->codfilrh ?? null;
+                $sugerido = $item->SUGERIDO ?? $item->sugerido ?? null;
 
-            if ($codvendr) {
-                // 3. BUSCA O GERENTE (CODSUP) DIRETAMENTE DA TABELA DE VENDEDORES (IGUAL AO SEU REPOSITORY)
-                $codgerente = DB::connection('sqlsrv_gemco')
-                    ->table('VEN_VEND')
-                    ->where('CODVENDR', $codvendr)
-                    ->value('CODSUP');
+                if ($codvendr) {
+                    // Busca o supervisor original no Gemco
+                    $codgerente = DB::connection('sqlsrv_gemco')
+                        ->table('VEN_VEND')
+                        ->where('CODVENDR', $codvendr)
+                        ->value('CODSUP');
 
-                // Se o vendedor for o "topo" e não tiver supervisor (CODSUP nulo), 
-                // definimos como 0 ou outro ID padrão para o banco aceitar o NOT NULL
-                $codgerente = $codgerente ?? 0;
+                    // --- APLICAÇÃO ESTRITA DAS REGRAS DE EXCEÇÃO ---
 
-                // 4. Salva ou atualiza os registros sem violar a constraint do banco
-                \App\Models\AMO_META::firstOrCreate(
-                    [
-                        'CODVENDR' => $codvendr,
-                        'ANO'      => $ano,
-                        'MES'      => $mes,
-                    ],
-                    [
-                        'CODFILRH'   => $codfilrh,
-                        'META'       => $sugerido,
-                        'CODGERENTE' => $codgerente, // Coluna obrigatória preenchida com sucesso!
-                        'DESCRICAO'  => 'Meta sugerida automaticamente',
-                    ]
-                );
+                    // Regra 1: Filial 14 (AMOEDO.COM) - Amarrar sempre ao vendedor 896
+                    if ($codfilrh == 14) {
+                        $codgerente = 896;
+                    } 
+                    // Regra 2: Filial 5 (VPJ) - Se o gerente não tem CODSUP, ele responde por ele mesmo
+                    elseif ($codfilrh == 5 && is_null($codgerente)) {
+                        $codgerente = $codvendr;
+                    } 
+                    // Regra Geral: Se não for filial 5 ou 14 e o CODSUP continuar nulo, ignoramos o registro
+                    elseif (is_null($codgerente)) {
+                        Log::info("Vendedor {$codvendr} da filial {$codfilrh} ignorado por não possuir CODSUP (Regra Geral).");
+                        continue; 
+
+                
+                    }
+                        
+                    // -----------------------------------------------
+
+                    // 4. Salva ou atualiza a meta sugerida no banco
+                    \App\Models\AMO_META::firstOrCreate(
+                        [
+                            'CODVENDR' => $codvendr,
+                            'ANO'      => $ano,
+                            'MES'      => $mes,
+                        ],
+                        [
+                            'CODFILRH'   => $codfilrh,
+                            'META'       => $sugerido,
+                            'CODGERENTE' => $codgerente, 
+                            'DESCRICAO'  => 'Meta sugerida automaticamente',
+                        ]
+                    );
+                }
             }
-        }
-    });
-}
+        });
+    }
 
     // Salva ou atualiza as metas usando updateOrCreate
     public function salvarMetasEmLote(array $dados, int $ano, int $mes): void
