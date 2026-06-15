@@ -113,29 +113,52 @@ public function gerarMetasSugeridas(int $ano, int $mes): void
         });
     }
 
-    // Salva ou atualiza as metas usando updateOrCreate
-    public function salvarMetasEmLote(array $dados, int $ano, int $mes): void
+    /**
+     * MÉTODO 5: SALVAR METAS EM LOTE COM AUDITORIA (VERSÃO DIRETA)
+     * Insere diretamente no banco sem validações complexas.
+     */
+    public function salvarMetasEmLote(int $ano, int $mes, array $metasDigitadas, string $usuarioLogado): void
     {
-        DB::transaction(function () use ($dados, $ano, $mes) {
-            foreach ($dados as $codvendr => $valores) {
-                $metaFormatada = isset($valores['meta'])
-                    ? str_replace(['.', ','], ['', '.'], $valores['meta'])
-                    : null;
+        // Roda o loop para cada vendedor que veio da tela
+        foreach ($metasDigitadas as $codvendr => $dados) {
+            
+            // 1. Pega os valores da tela (forçando o formato correto)
+            $novaMeta = isset($dados['meta']) ? (float) $dados['meta'] : 0.00;
+            $motivo = !empty($dados['motivo']) ? trim($dados['motivo']) : 'Alteração via sistema';
+            $codfil = isset($dados['codfil']) ? (int) $dados['codfil'] : 0;
 
-                \App\Models\AMO_META::updateOrCreate(
-                    [
-                        'CODVENDR' => $codvendr,
-                        'ANO' => $ano,
-                        'MES' => $mes,
-                    ],
-                    [
-                        'CODFILRH' => $valores['codfil'],
-                        'META' => $metaFormatada ? (float) $metaFormatada : null,
-                        'CODGERENTE' => $valores['codgerente'] ?? null,
-                        'DESCRICAO' => $valores['motivo'] ?? null,
-                    ]
-                );
-            }
-        });
+            // 2. Busca o valor que estava no banco antes só para guardar no histórico
+            $metaAnterior = DB::connection('sqlsrv')
+                ->table('estagio.dbo.AMO_META')
+                ->where('ANO', $ano)
+                ->where('MES', $mes)
+                ->where('CODVENDR', $codvendr)
+                ->value('META');
+
+            // 3. INSERÇÃO DO LOG: Direto na tabela via Query Builder (Sem passar pelo Model)
+            DB::connection('sqlsrv')->table('estagio.dbo.AMO_META_LOG')->insert([
+                'ANO' => $ano,
+                'MES' => $mes,
+                'CODFILRH' => $codfil,
+                'CODVENDR' => $codvendr,
+                'META_ANTIGA' => $metaAnterior, // se for a primeira vez, vai salvar NULL automático
+                'META_NOVA' => $novaMeta,
+                'MOTIVO' => $motivo,
+                'USUARIO_ALTERACAO' => $usuarioLogado,
+                'DATA_ALTERACAO' => now()
+            ]);
+
+            // 4. ATUALIZAÇÃO DA META: Salva o valor definitivo na tabela oficial
+            DB::connection('sqlsrv')->table('estagio.dbo.AMO_META')->updateOrInsert(
+                [
+                    'ANO' => $ano,
+                    'MES' => $mes,
+                    'CODVENDR' => $codvendr
+                ],
+                [
+                    'META' => $novaMeta
+                ]
+            );
+        }
     }
 }

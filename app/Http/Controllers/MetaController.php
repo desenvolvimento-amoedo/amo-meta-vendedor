@@ -74,61 +74,38 @@ class MetaController extends Controller
                 compact('userContext', 'filtros', 'listas', 'vendedores')
             );
         }
-    /**
-     * Processa o salvamento em lote das metas digitadas
+  /**
+     * Processa o salvamento em lote enviado pelo botão "Salvar Alterações"
      */
-        public function store(Request $request)
-        {
-            $request->validate([
-                'ano'   => 'required|integer',
-                'mes'   => 'required|integer',
-                'metas' => 'required|array',
-            ]);
+    public function store(Request $request)
+    {
+        $ano = (int) $request->input('ano');
+        $mes = (int) $request->input('mes');
+        $codfil = $request->input('codfil'); // Captura a filial para devolver a tela filtrada
+        
+        $metasDigitadas = $request->input('metas', []);
 
-            $anoAtual = (int) date('Y');
-            $mesAtual = (int) date('m');
+        $userContext = $request->get('userContext') ?? session('userContext');
+        $usuarioLogado = $userContext['username'] ?? 'sistema_metas';
 
-            $anoReq = (int) $request->input('ano');
-            $mesReq = (int) $request->input('mes');
+        try {
+            $this->metaService->salvarMetasEmLote($ano, $mes, $metasDigitadas, $usuarioLogado);
+            
+            // --- CORREÇÃO DO ERRO 405 ---
+            // Recarrega a página de busca enviando os mesmos filtros via GET de forma correta.
+            // (Substitua 'metas.index' pelo nome real da sua rota de listagem se for diferente)
+            return redirect()->route('metas.index', [
+                'ano' => $ano,
+                'mes' => $mes,
+                'codfil' => $codfil
+            ])->with('success', 'Metas e histórico de auditoria gravados com sucesso!');
 
-            if (
-                $anoReq < $anoAtual ||
-                ($anoReq == $anoAtual && $mesReq < $mesAtual)
-            ) {
-                return redirect()
-                    ->back()
-                    ->with(
-                        'error',
-                        'Operação negada: Não é permitido alterar metas de meses que já passaram.'
-                    );
-            }
-
-            try {
-
-                $this->metaService->salvarMetasEmLote(
-                    $request->input('metas'),
-                    $anoReq,
-                    $mesReq
-                );
-
-                return redirect()
-                    ->route(
-                        'metas.index',
-                        $request->only('ano', 'mes', 'codfilrh', 'codsup')
-                    )
-                    ->with(
-                        'success',
-                        'Metas processadas e salvas com sucesso!'
-                    );
-
-            } catch (\Exception $e) {
-
-                return redirect()
-                    ->back()
-                    ->with(
-                        'error',
-                        'Falha ao salvar metas: ' . $e->getMessage()
-                    );
-            }
+        } catch (\Exception $e) {
+            return redirect()->route('metas.index', [
+                'ano' => $ano,
+                'mes' => $mes,
+                'codfil' => $codfil
+            ])->with('error', $e->getMessage());
         }
+    }
 }

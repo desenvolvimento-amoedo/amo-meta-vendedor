@@ -15,7 +15,7 @@
     <nav class="navbar navbar-custom">
         <div class="container">
             <a class="navbar-brand brand-custom" href="#">
-                <img src="{{ asset('images/amo_amarelo.png') }}" alt="Logo Amoedo" class="brand-logo">
+                <img src="{{ asset('images/logo_fundo_removido.png') }}" alt="Logo Amoedo" class="brand-logo">
                 Gestão de Metas dos Vendedores
             </a>
 
@@ -136,12 +136,12 @@
                         <table class="table table-striped table-hover mb-0 align-middle">
                             <thead class="table-header-custom">
                                 <tr>
-                                    <th style="width: 5%;">CÓDIGO</th>
-                                    <th style="width: 20%;">VENDEDOR</th>
-                                    <th style="width: 5%;">FILIAL</th>
-                                    <th style="width: 15%;">META DEFINIDA (R$)</th>
-                                    <th style="width: 15%;">ALTERAÇÃO</th>
-                                    <th style="width: 25%;">MOTIVO</th>
+                                    <th style="width: 5%;">Código</th>
+                                    <th style="width: 20%;">Vendedor</th>
+                                    <th style="width: 5%;">Filial</th>
+                                    <th style="width: 15%;">Meta Definida</th>
+                                    <th style="width: 15%;">Alteração</th>
+                                    <th style="width: 25%;">Motivo da Alteração</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -155,15 +155,14 @@
                                     <td>
                                         <input type="hidden" name="metas[{{ $vendedor->CODVENDR }}][codfil]" value="{{ $vendedor->CODFIL }}">
                                         <div class="input-group">
-                                            <span class="input-group-text">$</span>
                                             <input type="number" 
                                                    step="0.01" 
-                                                   min="0"
+                                                   min="R$ 0"
                                                    class="form-control input-meta"
                                                    id="meta_{{ $vendedor->CODVENDR }}"
                                                    name="metas[{{ $vendedor->CODVENDR }}][meta]" 
                                                    value="{{ $vendedor->META }}" 
-                                                   placeholder="0,00" 
+                                                   placeholder="R$ 0,00" 
                                                    disabled> {{-- Sempre travado ao carregar --}}
                                         </div>
                                     </td>
@@ -187,13 +186,16 @@
                                                id="motivo_{{ $vendedor->CODVENDR }}"
                                                name="metas[{{ $vendedor->CODVENDR }}][motivo]" 
                                                value="{{ $vendedor->MOTIVO ?? '' }}" 
-                                               placeholder="Motivo da alteração" 
+                                               placeholder="Motivo da Alteração" 
                                                disabled> {{-- Sempre travado ao carregar --}}
                                     </td>
                                 </tr>
                                 @endforeach
                             </tbody>
+
+                            
                         </table>
+
                     </div>
 
                     <div class="footer-actions">
