@@ -91,21 +91,20 @@ class MetaController extends Controller
         try {
             $this->metaService->salvarMetasEmLote($ano, $mes, $metasDigitadas, $usuarioLogado);
             
-            // --- CORREÇÃO DO ERRO 405 ---
             // Recarrega a página de busca enviando os mesmos filtros via GET de forma correta.
-            // (Substitua 'metas.index' pelo nome real da sua rota de listagem se for diferente)
-            return redirect()->route('metas.index', [
-                'ano' => $ano,
-                'mes' => $mes,
-                'codfil' => $codfil
-            ])->with('success', 'Metas e histórico de auditoria gravados com sucesso!');
 
-        } catch (\Exception $e) {
             return redirect()->route('metas.index', [
                 'ano' => $ano,
                 'mes' => $mes,
                 'codfil' => $codfil
-            ])->with('error', $e->getMessage());
+            ])->with('success', 'Metas e histórico gravados com sucesso!');
+
+       } catch (\Exception $e) {
+           // return redirect()->route('metas.index', [
+             //   'ano' => $ano,
+            //    'mes' => $mes,
+           //     'codfil' => $codfil
+           // ])->with('error', $e->getMessage());
         }
     }
 }

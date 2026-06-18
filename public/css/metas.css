@@ -6,21 +6,29 @@
 
 /* --- 1. BARRA DE NAVEGAÇÃO SUPERIOR (NAVBAR) --- */
 .navbar-custom {
-    background-color: #000000; /* FUNDO DA BARRA: Amarelo Amoedo */
+    background-color: #000000; /* FUNDO DA BARRA: */
     margin-bottom: 1.5rem;     /* Espaço abaixo da barra */
 }
 
 .brand-custom {
-    font-weight: bold;         /* Título em negrito */
-    display: flex;
-    align-items: center;       /* Alinha a logo com o texto */
-    color: #ffffff;               /* COR DO TEXTO DO TÍTULO: Branco */
+    color: #ffffff;
+    font-weight: bold;
+    text-decoration: none;
+    text-align: center;
+    font-size: 25px;
+}
+
+.brand-custom:hover {
+    color: #ffffff;
+    text-decoration: none;
 }
 
 .brand-logo {
-    height: 40px;              /* Tamanho da imagem da logo */
-    margin-right: 1rem;        /* Espaço entre a logo e o título */
+    height: 45px;              /* Tamanho da imagem da logo */
+    margin-right: 5rem;        /* Espaço entre a logo e o título */
     border-radius: 0.25rem;    /* Arredonda levemente as pontas da logo */
+    margin-top: 8px;
+    /*margin-left: 0.5rem; */
 }
 
 .user-status {
@@ -31,7 +39,7 @@
 .badge-role {
     background-color: #000;    /* FUNDO DA ETIQUETA DE CARGO: Preto */
     color: #fff;               /* COR DO TEXTO DA ETIQUETA: Branco */
-    margin-left: 0.5rem;       /* Espaço entre o nome e a etiqueta */
+   /* margin-left: 5rem;       /* Espaço entre o nome e a etiqueta */
 }
 
 /* --- 2. CARDS (As caixas brancas onde ficam os filtros e a tabela) --- */
@@ -122,3 +130,4 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(26px);
 }
+

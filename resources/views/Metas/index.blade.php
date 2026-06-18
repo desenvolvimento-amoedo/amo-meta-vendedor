@@ -10,26 +10,35 @@
     <link href="{{ asset('css/metas.css') }}" rel="stylesheet">
 </head>
 
+
 <body class="bg-light">
 
-    <nav class="navbar navbar-custom">
-        <div class="container">
-            <a class="navbar-brand brand-custom" href="#">
-                <img src="{{ asset('images/logo_fundo_removido.png') }}" alt="Logo Amoedo" class="brand-logo">
-                Gestão de Metas dos Vendedores
-            </a>
+   <nav class="navbar navbar-custom">
+    <div class="container">
 
-            <span class="user-status">
-                Usuário Conectado: <strong>{{ $userContext['username'] ?? 'Usuário' }}</strong>
-                <span class="badge badge-role">
-                    {{ ($userContext['is_admin'] ?? false) ? 'Administrador' : 'Gerente (CODSUP: '.($userContext['codsup'] ?? '').')' }}
-                </span>
+        <a class="brand-custom d-flex align-items-center"
+           href="{{ route('metas.index') }}">
+
+            <img src="{{ asset('images/logo_fundo_removido.png') }}"
+                 alt="Logo Amoedo"
+                 class="brand-logo">
+
+            Gestão de Metas dos Vendedores
+        </a>
+
+        <span class="user-status">
+            Usuário Conectado: <strong>{{ $userContext['username'] ?? 'Usuário' }}</strong>
+            <span class="badge badge-role">
+                {{ ($userContext['is_admin'] ?? false) ? 'Administrador' : 'Gerente (CODSUP: '.($userContext['codsup'] ?? '').')' }}
             </span>
-        </div>
-    </nav>
+        </span>
+
+    </div>
+</nav>
 
     <div class="container mb-5">
 
+        {{-- Bloco de Alertas --}}
         @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
             <strong>Sucesso!</strong> {{ session('success') }}
@@ -44,7 +53,8 @@
         </div>
         @endif
 
-        <div class="card card-custom">
+        {{-- Card de Filtros --}}
+        <div class="card card-custom mb-4">
             <div class="card-header card-header-filters">Filtros de Seleção (Selecione a Filial ou o Gerente)</div>
             <div class="card-body">
                 <form method="GET" action="{{ route('metas.index') }}" id="form-filtros">
@@ -109,15 +119,16 @@
             </div>
         </div>
 
+        {{-- Listagem de Resultados --}}
         @if(!empty($vendedores) && (is_array($vendedores) || is_object($vendedores)) && count($vendedores) > 0)
         <div class="card card-custom">
-            <div class="card-header card-header-results">
+            <div class="card-header card-header-results d-flex justify-content-between align-items-center">
                 <span>Vendedores Encontrados</span>
                 <span class="badge bg-light text-primary">Total: {{ count($vendedores) }}</span>
             </div>
 
             <div class="card-body p-0">
-                <form method="POST" action="{{ route('metas.store') }}">
+                <form method="POST" action="{{ route('metas.store') }}" id="form-salvar-metas">
                     @csrf
                     <input type="hidden" name="ano" value="{{ $filtros['ano'] ?? date('Y') }}">
                     <input type="hidden" name="mes" value="{{ $filtros['mes'] ?? date('m') }}">
@@ -139,7 +150,7 @@
                                     <th style="width: 5%;">Código</th>
                                     <th style="width: 20%;">Vendedor</th>
                                     <th style="width: 5%;">Filial</th>
-                                    <th style="width: 15%;">Meta Definida</th>
+                                    <th style="width: 15%;">Sugestão</th>
                                     <th style="width: 15%;">Alteração</th>
                                     <th style="width: 25%;">Motivo da Alteração</th>
                                 </tr>
@@ -151,23 +162,21 @@
                                     <td>{{ $vendedor->NOME }}</td>
                                     <td><span class="badge bg-secondary">{{ $vendedor->CODFIL }}</span></td>
                                     
-                                    {{-- COLUNA DA META --}}
                                     <td>
                                         <input type="hidden" name="metas[{{ $vendedor->CODVENDR }}][codfil]" value="{{ $vendedor->CODFIL }}">
                                         <div class="input-group">
                                             <input type="number" 
                                                    step="0.01" 
-                                                   min="R$ 0"
+                                                   min="0"
                                                    class="form-control input-meta"
                                                    id="meta_{{ $vendedor->CODVENDR }}"
                                                    name="metas[{{ $vendedor->CODVENDR }}][meta]" 
                                                    value="{{ $vendedor->META }}" 
                                                    placeholder="R$ 0,00" 
-                                                   disabled> {{-- Sempre travado ao carregar --}}
+                                                   disabled>
                                         </div>
                                     </td>
 
-                                    {{-- COLUNA DO SWITCH SLIDER --}}
                                     <td>
                                         <label class="switch">
                                             <input type="checkbox" 
@@ -179,7 +188,6 @@
                                         </label>
                                     </td>
 
-                                    {{-- COLUNA DO MOTIVO --}}
                                     <td>
                                         <input type="text" 
                                                class="form-control input-motivo" 
@@ -187,27 +195,27 @@
                                                name="metas[{{ $vendedor->CODVENDR }}][motivo]" 
                                                value="{{ $vendedor->MOTIVO ?? '' }}" 
                                                placeholder="Motivo da Alteração" 
-                                               disabled> {{-- Sempre travado ao carregar --}}
+                                               disabled>
                                     </td>
                                 </tr>
                                 @endforeach
                             </tbody>
-
-                            
                         </table>
-
                     </div>
 
-                    <div class="footer-actions">
+                    <div class="footer-actions p-3 text-end">
                         @if(!$bloquearEdicao)
-                        <button type="submit" class="btn btn-success btn-action">Salvar Alterações</button>
+                            <button type="submit" class="btn btn-success btn-action">
+                                Salvar Alterações
+                            </button>
                         @else
-                        <button type="button" class="btn btn-secondary btn-action" disabled>Mês Fechado</button>
+                            <button type="button" class="btn btn-secondary btn-action" disabled>
+                                Mês Fechado
+                            </button>
                         @endif
                     </div>
                 </form>
             </div>
-        </div>
         @else
         <div class="alert alert-info shadow-sm border-0" role="alert">
             💡 <strong>Instrução:</strong> @if($userContext['is_admin'] ?? false) Selecione uma <strong>Filial</strong> ou um <strong>Gerente</strong> nos filtros acima para listar os vendedores e gerenciar as metas. @else Selecione uma <strong>Filial</strong> para filtrar os seus vendedores sob sua supervisão. @endif

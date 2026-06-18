@@ -41,8 +41,8 @@ class MetaService
 
     // Gera as metas sugeridas para um determinado mês/ano/filial, usando a procedure armazenada
 
-public function gerarMetasSugeridas(int $ano, int $mes): void
-{
+    public function gerarMetasSugeridas(int $ano, int $mes): void
+    {
     // 1. Instância do PDO para rodar a procedure ignorando os retornos das tabelas temporárias
     $pdo = DB::connection('sqlsrv_desenvolvimento')->getPdo();
     $stmt = $pdo->prepare("EXEC SPU_AMO_META_SUGERIDO ?, ?, NULL");
@@ -105,7 +105,7 @@ public function gerarMetasSugeridas(int $ano, int $mes): void
                             'CODFILRH'   => $codfilrh,
                             'META'       => $sugerido,
                             'CODGERENTE' => $codgerente, 
-                            'DESCRICAO'  => 'Meta sugerida automaticamente',
+                            'DESCRICAO'  => $motivo ?? 'Meta sugerida automaticamente',
                         ]
                     );
                 }
@@ -114,20 +114,16 @@ public function gerarMetasSugeridas(int $ano, int $mes): void
     }
 
     /**
-     * MÉTODO 5: SALVAR METAS EM LOTE COM AUDITORIA (VERSÃO DIRETA)
-     * Insere diretamente no banco sem validações complexas.
+     * MÉTODO 5: SALVAR METAS EM LOTE COM AUDITORIA 
      */
     public function salvarMetasEmLote(int $ano, int $mes, array $metasDigitadas, string $usuarioLogado): void
     {
-        // Roda o loop para cada vendedor que veio da tela
         foreach ($metasDigitadas as $codvendr => $dados) {
-            
-            // 1. Pega os valores da tela (forçando o formato correto)
             $novaMeta = isset($dados['meta']) ? (float) $dados['meta'] : 0.00;
             $motivo = !empty($dados['motivo']) ? trim($dados['motivo']) : 'Alteração via sistema';
             $codfil = isset($dados['codfil']) ? (int) $dados['codfil'] : 0;
 
-            // 2. Busca o valor que estava no banco antes só para guardar no histórico
+            // Busca a meta atual antes de alterar
             $metaAnterior = DB::connection('sqlsrv')
                 ->table('estagio.dbo.AMO_META')
                 ->where('ANO', $ano)
@@ -135,29 +131,28 @@ public function gerarMetasSugeridas(int $ano, int $mes): void
                 ->where('CODVENDR', $codvendr)
                 ->value('META');
 
-            // 3. INSERÇÃO DO LOG: Direto na tabela via Query Builder (Sem passar pelo Model)
+            // Se a meta digitada for exatamente igual à anterior, ignora!
+            // Converte ambos para string ou float com 2 casas para evitar divergências de ponto flutuante
+            if ($metaAnterior !== null && number_format((float)$metaAnterior, 2, '.', '') === number_format($novaMeta, 2, '.', '')) {
+                continue; 
+            }
+
+            // Só grava no Log e atualiza o banco se o valor for realmente DIFERENTE
             DB::connection('sqlsrv')->table('estagio.dbo.AMO_META_LOG')->insert([
                 'ANO' => $ano,
                 'MES' => $mes,
                 'CODFILRH' => $codfil,
                 'CODVENDR' => $codvendr,
-                'META_ANTIGA' => $metaAnterior, // se for a primeira vez, vai salvar NULL automático
+                'META_ANTIGA' => $metaAnterior,
                 'META_NOVA' => $novaMeta,
                 'MOTIVO' => $motivo,
                 'USUARIO_ALTERACAO' => $usuarioLogado,
-                'DATA_ALTERACAO' => now()
+                'DATA_ALTERACAO' => now() 
             ]);
 
-            // 4. ATUALIZAÇÃO DA META: Salva o valor definitivo na tabela oficial
             DB::connection('sqlsrv')->table('estagio.dbo.AMO_META')->updateOrInsert(
-                [
-                    'ANO' => $ano,
-                    'MES' => $mes,
-                    'CODVENDR' => $codvendr
-                ],
-                [
-                    'META' => $novaMeta
-                ]
+                ['ANO' => $ano, 'MES' => $mes, 'CODVENDR' => $codvendr],
+                ['META' => $novaMeta, 'DESCRICAO' => $motivo]
             );
         }
     }
