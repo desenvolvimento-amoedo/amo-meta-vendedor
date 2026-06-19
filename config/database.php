@@ -129,15 +129,13 @@ return [
             // 'trust_server_certificate' => env('DB_GEMCO_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
-        'sqlsrv_desenvolvimento' => [
+       'sqlsrv_desenvolvimento' => [
             'driver' => 'sqlsrv',
-            'url' => env('DB_DESENVOLVIMENTO_URL'),
-            'host' => env('DB_DESENVOLVIMENTO_HOST', 'localhost'),
+            'host' => env('DB_DESENVOLVIMENTO_HOST', '10.0.50.232'), 
             'port' => env('DB_DESENVOLVIMENTO_PORT', '1433'),
-            'database' => env('DB_DESENVOLVIMENTO_DATABASE', 'laravel'),
-            'username' => env('DB_DESENVOLVIMENTO_USERNAME', 'root'),
-            'password' => env('DB_DESENVOLVIMENTO_PASSWORD', ''),
-            'charset' => env('DB_DESENVOLVIMENTO_CHARSET', 'utf8'),
+            'database' => env('DB_DESENVOLVIMENTO_DATABASE', 'META_IDV'), 
+            'username' => env('DB_DESENVOLVIMENTO_USERNAME', 'desenvolvimento'), 
+            'password' => env('DB_DESENVOLVIMENTO_PASSWORD', 'amoedo@2019'), 
             'prefix' => '',
             'prefix_indexes' => true,
             // 'encrypt' => env('DB_DESENVOLVIMENTO_ENCRYPT', 'yes'),
@@ -176,6 +174,7 @@ return [
         'client' => env('REDIS_CLIENT', 'phpredis'),
 
         'options' => [
+            PDO::ATTR_PERSISTENT => false,
             'cluster' => env('REDIS_CLUSTER', 'redis'),
             'prefix' => env('REDIS_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-database-'),
             'persistent' => env('REDIS_PERSISTENT', false),

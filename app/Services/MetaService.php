@@ -41,13 +41,23 @@ class MetaService
 
     // Gera as metas sugeridas para um determinado mês/ano/filial, usando a procedure armazenada
 
-    public function gerarMetasSugeridas(int $ano, int $mes): void
+    // Adicionado o ?int $codfil para segmentar a procedure por filial
+    public function gerarMetasSugeridas(int $ano, int $mes, ?int $codfil = null): void
     {
-    // 1. Instância do PDO para rodar a procedure ignorando os retornos das tabelas temporárias
-    $pdo = DB::connection('sqlsrv_desenvolvimento')->getPdo();
-    $stmt = $pdo->prepare("EXEC SPU_AMO_META_SUGERIDO ?, ?, NULL");
-    $stmt->execute([$ano, $mes]);
+        // 1. Instância do PDO para rodar a procedure ignorando os retornos das tabelas temporárias
+        $pdo = DB::connection('sqlsrv_desenvolvimento')->getPdo();
+        
+        // Agora passamos o terceiro parâmetro dinamicamente para o EXEC
+        $stmt = $pdo->prepare("EXEC SPU_AMO_META_SUGERIDO ?, ?, ?");
+        $stmt->execute([$ano, $mes, $codfil]);
 
+        // Avança os ponteiros até encontrar o SELECT com as colunas reais do layout final
+        while ($stmt->columnCount() === 0 && $stmt->nextRowset()) {
+            // Ignora os alertas "X rows affected" das tabelas temporárias
+        }
+
+        $dados = $stmt->fetchAll(\PDO::FETCH_OBJ);
+        
     // Avança os ponteiros até encontrar o SELECT com as colunas reais do layout final
     while ($stmt->columnCount() === 0 && $stmt->nextRowset()) {
         // Ignora os alertas "X rows affected" das tabelas temporárias
