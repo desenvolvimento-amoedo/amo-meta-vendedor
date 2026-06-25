@@ -2,15 +2,14 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MetaController;
+use App\Services\AuthCorporateService; 
+use Illuminate\Http\Request;          
+
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes - Gestão de Metas
 |--------------------------------------------------------------------------
-|
-| Passamos o grupo 'web' para ativar as sessões/cookies + seu 'corporate.auth'
-| para garantir a identificação e segurança do usuário logado.
-|
 */
 
 Route::middleware(['web', 'corporate.auth'])->group(function () {
@@ -20,5 +19,10 @@ Route::middleware(['web', 'corporate.auth'])->group(function () {
 
     // Rota de envio do formulário: Salva as metas preenchidas em lote
     Route::post('/metas', [MetaController::class, 'store'])->name('metas.store');
+
+    // NOVA ROTA DE TESTE: Colocando aqui dentro, ela herda a segurança do middleware
+    Route::get('/teste-usuario', function (Request $request, AuthCorporateService $authService) {
+        return response()->json($authService->getUserContext($request));
+    });
 
 });

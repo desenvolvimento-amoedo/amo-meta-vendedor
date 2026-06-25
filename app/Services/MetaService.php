@@ -40,36 +40,31 @@ class MetaService
     }
 
     // Gera as metas sugeridas para um determinado mês/ano/filial, usando a procedure armazenada
-
-    // Adicionado o ?int $codfil para segmentar a procedure por filial
     public function gerarMetasSugeridas(int $ano, int $mes, ?int $codfil = null): void
     {
-        // 1. Instância do PDO para rodar a procedure ignorando os retornos das tabelas temporárias
+        // 1. Instância do PDO
         $pdo = DB::connection('sqlsrv_desenvolvimento')->getPdo();
         
-        // Agora passamos o terceiro parâmetro dinamicamente para o EXEC
-        $stmt = $pdo->prepare("EXEC SPU_AMO_META_SUGERIDO ?, ?, ?");
-        $stmt->execute([$ano, $mes, $codfil]);
+        // Voltamos o NULL fixo para trazer todos os vendedores e alimentar o banco
+        $stmt = $pdo->prepare("EXEC SPU_AMO_META_SUGERIDO ?, ?, NULL");
+        $stmt->execute([$ano, $mes]);
 
         // Avança os ponteiros até encontrar o SELECT com as colunas reais do layout final
         while ($stmt->columnCount() === 0 && $stmt->nextRowset()) {
             // Ignora os alertas "X rows affected" das tabelas temporárias
         }
 
-        $dados = $stmt->fetchAll(\PDO::FETCH_OBJ);
-        
-    // Avança os ponteiros até encontrar o SELECT com as colunas reais do layout final
-    while ($stmt->columnCount() === 0 && $stmt->nextRowset()) {
-        // Ignora os alertas "X rows affected" das tabelas temporárias
-    }
+        // Verificamos se o ponteiro ainda é válido antes de ler (Evita erro IMSSP)
+        $dados = [];
+        if ($stmt->columnCount() > 0) {
+            $dados = $stmt->fetchAll(\PDO::FETCH_OBJ);
+        }
 
-    $dados = $stmt->fetchAll(\PDO::FETCH_OBJ);
-
-    if (empty($dados)) {
-        Log::info("Nenhum dado retornado pela procedure para o ano $ano e mês $mes.");
-        return;
-    }
-
+        if (empty($dados)) {
+            Log::info("Nenhum dado retornado pela procedure para o ano $ano e mês $mes.");
+            return; 
+        }
+     
         
         DB::transaction(function () use ($dados, $ano, $mes) {
             foreach ($dados as $item) {
@@ -98,8 +93,6 @@ class MetaService
                     elseif (is_null($codgerente)) {
                         Log::info("Vendedor {$codvendr} da filial {$codfilrh} ignorado por não possuir CODSUP (Regra Geral).");
                         continue; 
-
-                
                     }
                         
                     // -----------------------------------------------
@@ -115,7 +108,7 @@ class MetaService
                             'CODFILRH'   => $codfilrh,
                             'META'       => $sugerido,
                             'CODGERENTE' => $codgerente, 
-                            'DESCRICAO'  => $motivo ?? 'Meta sugerida automaticamente',
+                            'DESCRICAO'  => $motivo ?? 'Sugestão de meta automática',
                         ]
                     );
                 }
@@ -128,11 +121,14 @@ class MetaService
      */
     public function salvarMetasEmLote(int $ano, int $mes, array $metasDigitadas, string $usuarioLogado): void
     {
+
         foreach ($metasDigitadas as $codvendr => $dados) {
+            
             $novaMeta = isset($dados['meta']) ? (float) $dados['meta'] : 0.00;
             $motivo = !empty($dados['motivo']) ? trim($dados['motivo']) : 'Alteração via sistema';
             $codfil = isset($dados['codfil']) ? (int) $dados['codfil'] : 0;
 
+            
             // Busca a meta atual antes de alterar
             $metaAnterior = DB::connection('sqlsrv')
                 ->table('estagio.dbo.AMO_META')
@@ -142,7 +138,6 @@ class MetaService
                 ->value('META');
 
             // Se a meta digitada for exatamente igual à anterior, ignora!
-            // Converte ambos para string ou float com 2 casas para evitar divergências de ponto flutuante
             if ($metaAnterior !== null && number_format((float)$metaAnterior, 2, '.', '') === number_format($novaMeta, 2, '.', '')) {
                 continue; 
             }

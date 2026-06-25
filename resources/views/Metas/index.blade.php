@@ -7,9 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metas de Vendedores</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('css/metas.css') }}" rel="stylesheet">
-</head>
-
+</head> 
 
 <body class="bg-light">
 
@@ -163,18 +163,21 @@
                                     <td><span class="badge bg-secondary">{{ $vendedor->CODFIL }}</span></td>
                                     
                                     <td>
-                                        <input type="hidden" name="metas[{{ $vendedor->CODVENDR }}][codfil]" value="{{ $vendedor->CODFIL }}">
-                                        <div class="input-group">
-                                            <input type="number" 
-                                                   step="0.01" 
-                                                   min="0"
-                                                   class="form-control input-meta"
-                                                   id="meta_{{ $vendedor->CODVENDR }}"
-                                                   name="metas[{{ $vendedor->CODVENDR }}][meta]" 
-                                                   value="{{ $vendedor->META }}" 
-                                                   placeholder="R$ 0,00" 
-                                                   disabled>
-                                        </div>
+                                                                        
+                                    <input type="hidden" name="metas[{{ $vendedor->CODVENDR }}][codfil]" value="{{ $vendedor->CODFIL }}">
+                                    
+                                    <input type="hidden" name="metas[{{ $vendedor->CODVENDR }}][meta]" value="{{ $vendedor->META }}">
+
+                                    <div class="input-group">
+                                        <span class="input-group-text">R$</span>
+                                        
+                                        <input type="text" 
+                                            class="form-control input-meta"
+                                            id="meta_{{ $vendedor->CODVENDR }}"
+                                            value="{{ number_format($vendedor->META, 2, ',', '.') }}" 
+                                            disabled>
+                                    </div>
+                                
                                     </td>
 
                                     <td>

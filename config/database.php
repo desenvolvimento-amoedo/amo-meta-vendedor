@@ -131,7 +131,7 @@ return [
 
        'sqlsrv_desenvolvimento' => [
             'driver' => 'sqlsrv',
-            'host' => env('DB_DESENVOLVIMENTO_HOST', '10.0.50.232'), 
+            'host' => env('DB_DESENVOLVIMENTO_HOST', '10.240.40.21'), 
             'port' => env('DB_DESENVOLVIMENTO_PORT', '1433'),
             'database' => env('DB_DESENVOLVIMENTO_DATABASE', 'META_IDV'), 
             'username' => env('DB_DESENVOLVIMENTO_USERNAME', 'desenvolvimento'), 

@@ -20,7 +20,7 @@ class CorporateAuthMiddleware
         // Obtém o mapeamento do usuário logado (se é admin, gerente, etc.)
         $userContext = $this->authService->getUserContext($request);
 
-        // Se por algum motivo bizarro a rede não identificou o usuário, barra o acesso
+        // Se por algum motivo a rede não identificou o usuário, barra o acesso
         if (!$userContext['username']) {
             abort(403, 'Acesso não autorizado. Usuário não identificado na rede corporativa.');
         }
