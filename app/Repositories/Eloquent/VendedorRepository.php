@@ -2,8 +2,8 @@
 
 namespace App\Repositories\Eloquent;
 
-use Illuminate\Support\Facades\DB;
 use App\Repositories\Contracts\VendedorRepositoryInterface;
+use Illuminate\Support\Facades\DB;
 
 class VendedorRepository implements VendedorRepositoryInterface
 {
@@ -21,7 +21,7 @@ class VendedorRepository implements VendedorRepositoryInterface
                   ->where('VEN_VEND.CODVENDR', (int) $codgerente);
         }
           
-        return $query->orderBy('CAD_FILIAL.FANTASIA')->get();
+        return $query->orderBy('CAD_FILIAL.CODFIL')->get();
     }
 
     /**
@@ -109,8 +109,8 @@ class VendedorRepository implements VendedorRepositoryInterface
         $codigosVendedores = $vendedores->pluck('CODVENDR')->toArray();
 
         // 3. Busca as metas dos vendedores encontrados para o período selecionado
-        $metas = DB::connection('sqlsrv')
-            ->table('estagio.dbo.AMO_META')
+        $metas = DB::connection('sqlsrv_desenvolvimento')
+            ->table('portal.dbo.AMO_META')
             ->where('ANO', $ano)
             ->where('MES', $mes)
             ->whereIn('CODVENDR', $codigosVendedores)

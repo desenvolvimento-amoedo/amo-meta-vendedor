@@ -229,7 +229,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    {{-- JAVASCRIPT EXCLUSIVO DA TELA PARA CONTROLAR OS TRAVAMENTOS --}}
+{{-- JAVASCRIPT EXCLUSIVO DA TELA PARA CONTROLAR OS TRAVAMENTOS E VALIDAÇÃO --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             
@@ -248,19 +248,58 @@
                         if (inputMotivo) inputMotivo.removeAttribute('disabled');
                         if (inputMeta) inputMeta.focus();
                     } else {
-                        // Switch desligado: bloqueia novamente
+                        // Switch desligado: bloqueia novamente e limpa erro visual se houver
                         if (inputMeta) inputMeta.setAttribute('disabled', 'disabled');
-                        if (inputMotivo) inputMotivo.setAttribute('disabled', 'disabled');
+                        if (inputMotivo) {
+                            inputMotivo.setAttribute('disabled', 'disabled');
+                            inputMotivo.classList.remove('is-invalid');
+                        }
                     }
                 });
             });
 
-            // 2. Antes de submeter o POST, removemos temporariamente o 'disabled' 
-            // de todos os inputs para que o Laravel não receba arrays vazios nas linhas não modificadas
+            // 2. Remove o erro visual (borda vermelha) assim que o usuário começar a digitar o motivo
+            document.querySelectorAll('.input-motivo').forEach(function(input) {
+                input.addEventListener('input', function() {
+                    if (this.value.trim() !== '') {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            });
+
+            // 3. Validação antes de submeter o POST
             const formSalvar = document.querySelector('form[action="{{ route("metas.store") }}"]');
 
             if (formSalvar) {
-                formSalvar.addEventListener('submit', function () {
+                formSalvar.addEventListener('submit', function (event) {
+                    let temErro = false;
+                    let primeiroErro = null;
+
+                    // Verifica apenas os switches que estão ativados
+                    const switchesAtivos = document.querySelectorAll('.switch-alteracao:checked');
+
+                    switchesAtivos.forEach(function (toggle) {
+                        const codvendr = toggle.getAttribute('data-vendedor');
+                        const inputMotivo = document.getElementById('motivo_' + codvendr);
+
+                        // Se o motivo estiver vazio ou só com espaços
+                        if (inputMotivo && inputMotivo.value.trim() === '') {
+                            temErro = true;
+                            inputMotivo.classList.add('is-invalid'); // Adiciona borda vermelha
+                            if (!primeiroErro) primeiroErro = inputMotivo; // Salva o primeiro campo com erro
+                        }
+                    });
+
+                    // Se encontrou algum erro, trava o formulário
+                    if (temErro) {
+                        event.preventDefault(); 
+                        alert('Preencha o motivo de todas as metas que você alterou.');
+                        if (primeiroErro) primeiroErro.focus(); // Joga o cursor para o primeiro campo vazio
+                        return;
+                    }
+
+                    // Se passou na validação, removemos temporariamente o 'disabled' 
+                    // de todos os inputs para que o Laravel receba os dados corretamente
                     document.querySelectorAll('.input-meta, .input-motivo').forEach(function (input) {
                         input.removeAttribute('disabled');
                     });

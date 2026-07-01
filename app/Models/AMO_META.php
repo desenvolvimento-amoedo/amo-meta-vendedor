@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class AMO_META extends Model
 {
-    protected $connection = 'sqlsrv';
-    protected $table = 'AMO_META';
+    protected $connection = 'sqlsrv_desenvolvimento';
+    protected $table = 'portal.dbo.AMO_META';
     protected $primaryKey = 'ID';
     public $timestamps = false; // Desativa os timestamps automáticos
 

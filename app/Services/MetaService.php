@@ -121,17 +121,17 @@ class MetaService
      */
     public function salvarMetasEmLote(int $ano, int $mes, array $metasDigitadas, string $usuarioLogado): void
     {
-
+        DB::connection('sqlsrv_desenvolvimento')->transaction(function () use ($ano, $mes, $metasDigitadas, $usuarioLogado) {
         foreach ($metasDigitadas as $codvendr => $dados) {
-            
-            $novaMeta = isset($dados['meta']) ? (float) $dados['meta'] : 0.00;
+         
+            $novaMeta = isset($dados['meta']) ? (float) str_replace(',', '.', $dados['meta']) : 0.00;
             $motivo = !empty($dados['motivo']) ? trim($dados['motivo']) : 'Alteração via sistema';
             $codfil = isset($dados['codfil']) ? (int) $dados['codfil'] : 0;
 
             
             // Busca a meta atual antes de alterar
-            $metaAnterior = DB::connection('sqlsrv')
-                ->table('estagio.dbo.AMO_META')
+            $metaAnterior = DB::connection('sqlsrv_desenvolvimento')
+                ->table('portal.dbo.AMO_META')
                 ->where('ANO', $ano)
                 ->where('MES', $mes)
                 ->where('CODVENDR', $codvendr)
@@ -143,7 +143,7 @@ class MetaService
             }
 
             // Só grava no Log e atualiza o banco se o valor for realmente DIFERENTE
-            DB::connection('sqlsrv')->table('estagio.dbo.AMO_META_LOG')->insert([
+            DB::connection('sqlsrv_desenvolvimento')->table('portal.dbo.AMO_META_LOG')->insert([
                 'ANO' => $ano,
                 'MES' => $mes,
                 'CODFILRH' => $codfil,
@@ -155,10 +155,11 @@ class MetaService
                 'DATA_ALTERACAO' => now() 
             ]);
 
-            DB::connection('sqlsrv')->table('estagio.dbo.AMO_META')->updateOrInsert(
+            DB::connection('sqlsrv_desenvolvimento')->table('portal.dbo.AMO_META')->updateOrInsert(
                 ['ANO' => $ano, 'MES' => $mes, 'CODVENDR' => $codvendr],
                 ['META' => $novaMeta, 'DESCRICAO' => $motivo]
             );
         }
-    }
+    });
+}
 }

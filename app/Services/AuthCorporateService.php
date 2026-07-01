@@ -9,7 +9,7 @@ class AuthCorporateService
     // REGRA: Existem apenas 3 usuários administradores com acesso total
     // Todos os outros usuários são considerados gerentes e só veem os dados relacionados a eles
     //SUBSTITUIR 'admin1', 'admin2', 'admin3' PELOS LOGINS DE REDE DOS ADMINISTRADORES REAIS
-    private array $administradores = ['admin1', 'admin2', 'admin3'];
+    private array $administradores = ['admin1', 'roseane.silva', 'admin3'];
 
     
     //Identifica automaticamente o usuário logado na rede/portal.
@@ -25,7 +25,7 @@ class AuthCorporateService
         // Fallback apenas para o ambiente de desenvolvimento local não quebrar
         if (!$loginRede && config('app.env') === 'local') {
             $loginRede = 'admin1'; // Simula um admin para desenvolvimento
-        }
+     }
 
         // Limpa o domínio caso o Windows envie no formato "DOMINIO\usuario"
         $username = str_contains($loginRede, '\\') ? explode('\\', $loginRede)[1] : $loginRede;
@@ -35,7 +35,7 @@ class AuthCorporateService
         
         // Se NÃO for admin, a regra diz que ele é gerente.
         // Assumimos que o login de rede dele mapeia diretamente para o CODSUP (ex: número de matrícula)
-        $codsup = $isAdmin ? null : (int) $username;
+        $codsup = $isAdmin ? null : (string) $username;
 
         return [
             'username' => $username,

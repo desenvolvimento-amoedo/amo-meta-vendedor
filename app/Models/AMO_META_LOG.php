@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class AMO_META_LOG extends Model
 {
-    protected $connection = 'sqlsrv';
-    protected $table = 'estagio.dbo.AMO_META_LOG';
+    protected $connection = 'sqlsrv_desenvolvimento';
+    protected $table = 'portal.dbo.AMO_META_LOG';
     protected $primaryKey = 'ID';
     public $timestamps = false;
     protected $fillable = [
