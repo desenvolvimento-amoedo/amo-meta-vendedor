@@ -62,7 +62,7 @@
 
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Ano</label>
-                            <select name="ano" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+                            <select name="ano" class="form-select" onchange="bloquearEFiltrar()">
                                 @for($i = date('Y') - 1; $i <= date('Y') + 1; $i++)
                                     <option value="{{ $i }}" {{ ($filtros['ano'] ?? date('Y')) == $i ? 'selected' : '' }}>{{ $i }}</option>
                                 @endfor
@@ -71,7 +71,7 @@
 
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Mês</label>
-                            <select name="mes" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+                            <select name="mes" class="form-select" onchange="bloquearEFiltrar()">
                                 @for($m = 1; $m <= 12; $m++)
                                     <option value="{{ $m }}" {{ ($filtros['mes'] ?? date('m')) == $m ? 'selected' : '' }}>
                                         {{ str_pad($m, 2, '0', STR_PAD_LEFT) }}
@@ -82,7 +82,7 @@
                         
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Filial</label>
-                            <select name="codfil" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+                            <select name="codfil" class="form-select" onchange="bloquearEFiltrar()">
                                 <option value="">Selecione a Filial</option>
                                 @foreach($listas['filiais'] as $filial)
                                 <option value="{{ $filial->CODFIL }}" {{ $filtros['codfil'] == $filial->CODFIL ? 'selected' : '' }}>
@@ -95,7 +95,7 @@
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Gerente</label>
                             @if($userContext['is_admin'] ?? false)
-                            <select name="codsup" class="form-select" onchange="document.getElementById('form-filtros').submit()">
+                            <select name="codsup" class="form-select" onchange="bloquearEFiltrar()">
                                 <option value="">Todos os Gerentes</option>
                                 @foreach(($listas['gerentes'] ?? []) as $gerente)
                                     @php
@@ -229,8 +229,31 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-{{-- JAVASCRIPT EXCLUSIVO DA TELA PARA CONTROLAR OS TRAVAMENTOS E VALIDAÇÃO --}}
-    <script>
+    {{-- JAVASCRIPT EXCLUSIVO DA TELA PARA CONTROLAR OS TRAVAMENTOS E VALIDAÇÃO --}}
+
+        <script>
+                    // Função para bloquear a tela e enviar o formulário de filtros
+            window.bloquearEFiltrar = function() {
+                const form = document.getElementById('form-filtros');
+                
+                // 1. Desativa os selects visualmente e impede novos cliques
+                form.querySelectorAll('select').forEach(function(select) {
+                    select.style.pointerEvents = 'none'; // Bloqueia o clique do mouse
+                    select.style.opacity = '0.6';        // Deixa "apagado"
+                });
+
+                // 2. Muda o texto do cabeçalho do card para avisar o usuário
+                const tituloFiltro = document.querySelector('.card-header-filters');
+                if (tituloFiltro) {
+                    tituloFiltro.innerHTML = 'Filtros de Seleção <span class="badge bg-warning text-dark ms-3">Processando... Aguarde!</span>';
+                }
+
+                // 3. Muda o cursor do mouse para a "bolinha rodando" de carregamento
+                document.body.style.cursor = 'wait';
+
+                // 4. Dispara a submissão do formulário de forma segura
+                form.submit();
+            };
         document.addEventListener('DOMContentLoaded', function () {
             
             // 1. Gerencia o comportamento dos switches para ativar/desativar os inputs
@@ -298,7 +321,7 @@
                         return;
                     }
 
-                    // Se passou na validação, removemos temporariamente o 'disabled' 
+                    // Se passou na validação, remove temporariamente o 'disabled' 
                     // de todos os inputs para que o Laravel receba os dados corretamente
                     document.querySelectorAll('.input-meta, .input-motivo').forEach(function (input) {
                         input.removeAttribute('disabled');

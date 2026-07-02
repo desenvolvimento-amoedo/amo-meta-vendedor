@@ -14,6 +14,7 @@ class VendedorRepository implements VendedorRepositoryInterface
     {
         $query = DB::connection('sqlsrv_gemco')->table('CAD_FILIAL')
             ->select('CAD_FILIAL.CODFIL', 'CAD_FILIAL.FANTASIA')
+            ->whereNotIn('CODFIL', [5, 7, 9, 11, 15, 18, 19, 21, 23, 24, 25, 26, 27, 28, 29, 34, 35, 38])
             ->distinct();
 
         if (!$isAdmin && $codgerente) {
@@ -68,14 +69,11 @@ class VendedorRepository implements VendedorRepositoryInterface
         ->where('v.STATUS', 0) // Garante apenas funcionários ativos (Status = 0) conforme a sua regra
         ->whereNotIn('v.CODFILRH', [9]); // Mantém apenas a exclusão da filial 9
 
-    // --- CORREÇÃO RÍGIDA DAS REGRAS DO WHERE ---
     $query->where(function ($q) {
-        // Regra Geral: Tem que ser vendedor comum (TPVENDR = 4) E ter supervisor cadastrado
         $q->where(function($sub) {
             $sub->where('v.TPVENDR', 4)
                 ->whereNotNull('v.CODSUP');
         })
-        // OU Regra de Exceção da Filial 5: Mostra todos os ativos da filial 5, independente do TPVENDR ou CODSUP
         ->orWhere('v.CODFILRH', 5);
     });
     // --------------------------------------------
@@ -98,8 +96,6 @@ class VendedorRepository implements VendedorRepositoryInterface
 
     // Executa a busca dos vendedores com os filtros aplicados
     $vendedores = $query->orderBy('v.CODVENDR')->get();
-
-    // ... (o restante do método com o pluck de metas e o foreach continua EXATAMENTE IGUAL ao seu original)
 
         if ($vendedores->isEmpty()) {
             return $vendedores;

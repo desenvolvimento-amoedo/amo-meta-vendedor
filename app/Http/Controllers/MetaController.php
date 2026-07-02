@@ -90,21 +90,17 @@ class MetaController extends Controller
         $userContext = $request->attributes->get('corporate_user');
         $usuarioLogado = $userContext['username'] ?? 'sistema_metas';
 
-        try {
+     try {
             $this->metaService->salvarMetasEmLote($ano, $mes, $metasDigitadas, $usuarioLogado);
             
-            // 1. Grava a mensagem de sucesso na sessão
-            $request->session()->flash('success', 'Metas e histórico gravados com sucesso!');
-            $request->session()->save();
+            return redirect()
+                ->back()
+                ->with('success', 'Metas e histórico gravados com sucesso!');
 
-            // 2. Volta para a página anterior sem aparecer na url, mas mantendo os filtros selecionados
-            return redirect()->back()->withInput();
-
-        } catch (\Exception $e) {
-            $request->session()->flash('error', $e->getMessage());
-            $request->session()->save();
-
-            return redirect()->back()->withInput();
+        } catch (\Throwable $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Erro interno ao salvar: ' . $e->getMessage());
         }
     }
 }
