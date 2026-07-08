@@ -80,16 +80,24 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-3">
+                       <div class="col-md-3">
                             <label class="form-label fw-semibold">Filial</label>
-                            <select name="codfil" class="form-select" onchange="bloquearEFiltrar()">
-                                <option value="">Selecione a Filial</option>
-                                @foreach($listas['filiais'] as $filial)
-                                <option value="{{ $filial->CODFIL }}" {{ $filtros['codfil'] == $filial->CODFIL ? 'selected' : '' }}>
-                                    {{ $filial->CODFIL }} - {{ $filial->FANTASIA }}
-                                </option>
-                                @endforeach
-                            </select>
+                            
+                            @if(isset($restritoASuaFilial) && $restritoASuaFilial)
+                                <!-- Bloqueado para gerentes restritos -->
+                                <input type="text" class="form-control bg-light" value="Acesso restrito à sua equipe" disabled>
+                                <input type="hidden" name="codfil" value="{{ $filtros['codfil'] ?? '' }}">
+                            @else
+                                <!-- Aberto para Admins -->
+                                <select name="codfil" class="form-select" onchange="bloquearEFiltrar()">
+                                    <option value="">Selecione a Filial</option>
+                                    @foreach($listas['filiais'] as $filial)
+                                    <option value="{{ $filial->CODFIL }}" {{ ($filtros['codfil'] ?? '') == $filial->CODFIL ? 'selected' : '' }}>
+                                        {{ $filial->CODFIL }} - {{ $filial->FANTASIA }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            @endif
                         </div>
 
                         <div class="col-md-3">
@@ -172,6 +180,7 @@
                                         <span class="input-group-text">R$</span>
                                         
                                         <input type="text" 
+                                            name="metas[{{ $vendedor->CODVENDR }}][meta]"
                                             class="form-control input-meta"
                                             id="meta_{{ $vendedor->CODVENDR }}"
                                             value="{{ number_format($vendedor->META, 2, ',', '.') }}" 
@@ -266,7 +275,7 @@
                     const inputMotivo = document.getElementById('motivo_' + codvendr);
 
                     if (this.checked) {
-                        // Switch ativo: libera meta e motivo, foca na meta
+                        // Switch ativo: libera meta e motivo
                         if (inputMeta) inputMeta.removeAttribute('disabled');
                         if (inputMotivo) inputMotivo.removeAttribute('disabled');
                         if (inputMeta) inputMeta.focus();

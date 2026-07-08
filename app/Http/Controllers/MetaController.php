@@ -7,13 +7,17 @@ use App\Services\MetaService;
 
 class MetaController extends Controller
 {
-    // O Laravel pega automaticamente o MetaService aqui
     public function __construct(private MetaService $metaService) {}
 
     // Exibe a tela principal com os filtros e a listagem de vendedores
     public function index(Request $request)
     {
         $userContext = $request->attributes->get('corporate_user');
+        $isAdmin = $userContext['is_admin'] ?? false;
+        $permissoes = $userContext['permissoes'] ?? [];
+        
+        // Verifica se a permissão 'meta-vendedor' está atrelada a ele
+        $restritoASuaFilial = in_array('meta-vendedor', $permissoes);
 
         $filtros = [
             'ano'    => $request->input('ano', date('Y')),
@@ -22,6 +26,11 @@ class MetaController extends Controller
             'codsup' => $request->input('codsup'),
         ];
         
+        // Se ele não é admin e está restrito, forçamos a busca só na equipe dele
+        if (!$isAdmin && $restritoASuaFilial) {
+            $filtros['codsup'] = $userContext['codsup'];
+        }
+
         $codfil = null;
         if ($filtros['codsup']) {
             $codfil = $this->metaService->obterFilialDoGerente((int) $filtros['codsup']);
@@ -29,9 +38,6 @@ class MetaController extends Controller
 
         $listas = $this->metaService->obterFiltrosDeAcesso($userContext);
         
-        // -----------------------------------------------------
-        // PASSO 1: Buscamos os vendedores PRIMEIRO para validar se a filial tem movimento
-        // -----------------------------------------------------
         $vendedores = [];
 
         if ($filtros['codfil'] || $filtros['codsup'] || !$userContext['is_admin']) {
@@ -41,9 +47,7 @@ class MetaController extends Controller
             );
         }
 
-        // -----------------------------------------------------
-        // PASSO 2: Validação de Segurança e Processamento da Procedure
-        // -----------------------------------------------------
+
         if ($filtros['ano'] && $filtros['mes'] && count($vendedores) > 0) {
             
             // Determinamos qual filial estamos a avaliar
@@ -74,7 +78,7 @@ class MetaController extends Controller
 
         return view(
             'metas.index',
-            compact('userContext', 'filtros', 'listas', 'vendedores')
+            compact('userContext', 'filtros', 'listas', 'vendedores', 'restritoASuaFilial')
         );
     }
 
@@ -90,7 +94,7 @@ class MetaController extends Controller
         $userContext = $request->attributes->get('corporate_user');
         $usuarioLogado = $userContext['username'] ?? 'sistema_metas';
 
-     try {
+        try {
             $this->metaService->salvarMetasEmLote($ano, $mes, $metasDigitadas, $usuarioLogado);
             
             return redirect()

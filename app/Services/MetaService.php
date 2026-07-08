@@ -26,7 +26,6 @@ class MetaService
             ->value('CODFILRH');
     }
 
-    // Regra para listar os vendedores: Se for gerente, força o CODSUP dele ignorando fraudes de tela
     public function listarVendedores(array $userContext, array $filtros)
     {
         $codsup = $userContext['is_admin'] ? $filtros['codsup'] : $userContext['codsup'];
@@ -45,16 +44,11 @@ class MetaService
         // 1. Instância do PDO
         $pdo = DB::connection('sqlsrv_desenvolvimento')->getPdo();
         
-        // Voltamos o NULL fixo para trazer todos os vendedores e alimentar o banco
         $stmt = $pdo->prepare("EXEC SPU_AMO_META_SUGERIDO ?, ?, NULL");
         $stmt->execute([$ano, $mes]);
-
-        // Avança os ponteiros até encontrar o SELECT com as colunas reais do layout final
         while ($stmt->columnCount() === 0 && $stmt->nextRowset()) {
-            // Ignora os alertas "X rows affected" das tabelas temporárias
         }
 
-        // Verificamos se o ponteiro ainda é válido antes de ler (Evita erro IMSSP)
         $dados = [];
         if ($stmt->columnCount() > 0) {
             $dados = $stmt->fetchAll(\PDO::FETCH_OBJ);
@@ -73,7 +67,7 @@ class MetaService
                 $sugerido = $item->SUGERIDO ?? $item->sugerido ?? null;
 
                 if ($codvendr) {
-                    // Busca o supervisor original no Gemco
+
                     $codgerente = DB::connection('sqlsrv_gemco')
                         ->table('VEN_VEND')
                         ->where('CODVENDR', $codvendr)
@@ -117,18 +111,18 @@ class MetaService
     }
 
     /**
-     * MÉTODO 5: SALVAR METAS EM LOTE COM AUDITORIA 
+     * MÉTODO 5: SALVAR METAS
      */
     public function salvarMetasEmLote(int $ano, int $mes, array $metasDigitadas, string $usuarioLogado): void
     {
         DB::connection('sqlsrv_desenvolvimento')->transaction(function () use ($ano, $mes, $metasDigitadas, $usuarioLogado) {
         foreach ($metasDigitadas as $codvendr => $dados) {
          
-            $novaMeta = isset($dados['meta']) ? (float) str_replace(',', '.', $dados['meta']) : 0.00;
+           
+            $novaMeta = isset($dados['meta']) ? (float) str_replace(['.', ','], ['', '.'], $dados['meta']) : 0.00;
             $motivo = !empty($dados['motivo']) ? trim($dados['motivo']) : 'Alteração via sistema';
             $codfil = isset($dados['codfil']) ? (int) $dados['codfil'] : 0;
 
-            
             // Busca a meta atual antes de alterar
             $metaAnterior = DB::connection('sqlsrv_desenvolvimento')
                 ->table('portal.dbo.AMO_META')

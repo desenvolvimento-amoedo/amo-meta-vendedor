@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CorporateAuthMiddleware
 {
-    // O Laravel injeta automaticamente o serviço de autenticação corporativa
+    // O Laravel injeta automaticamente o serviço de autenticação 
     public function __construct(private AuthCorporateService $authService) {}
 
     /**
