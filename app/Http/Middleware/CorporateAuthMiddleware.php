@@ -22,7 +22,7 @@ class CorporateAuthMiddleware
 
         // Se por algum motivo a rede não identificou o usuário, barra o acesso
         if (!$userContext['username']) {
-            abort(403, 'Acesso não autorizado. Usuário não identificado na rede corporativa.');
+            abort(403, 'Acesso não permitido. Caso precise, entrar em contato com o TI.');
         }
 
         // Adiciona o contexto do usuário dentro dos atributos do Request.

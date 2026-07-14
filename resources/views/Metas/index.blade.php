@@ -17,7 +17,7 @@
     <div class="container">
 
         <a class="brand-custom d-flex align-items-center"
-           href="{{ route('metas.index') }}">
+           href="{{ route('metas.index', ['usuario' => $usuario]) }}">
 
             <img src="{{ asset('images/logo_fundo_removido.png') }}"
                  alt="Logo Amoedo"
@@ -27,9 +27,9 @@
         </a>
 
         <span class="user-status">
-            Usuário Conectado: <strong>{{ $userContext['username'] ?? 'Usuário' }}</strong>
+            <!-- Usuário Conectado: <strong>{{ $userContext['username'] ?? 'Usuário' }}</strong> -->
+            Usuário Conectado: <strong>{{ $usuario }}</strong>
             <span class="badge badge-role">
-                {{ ($userContext['is_admin'] ?? false) ? 'Administrador' : 'Gerente (CODSUP: '.($userContext['codsup'] ?? '').')' }}
             </span>
         </span>
 
@@ -55,13 +55,13 @@
 
         {{-- Card de Filtros --}}
         <div class="card card-custom mb-4">
-            <div class="card-header card-header-filters">Filtros de Seleção (Selecione a Filial ou o Gerente)</div>
+            <div class="card-header card-header-filters">Filtros de Seleção</div>
             <div class="card-body">
-                <form method="GET" action="{{ route('metas.index') }}" id="form-filtros">
+                <form method="GET" action="{{ route('metas.index', ['usuario' => $usuario]) }}" id="form-filtros">
                     <div class="row g-3">
 
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold">Ano</label>
+                            <label class="form-label fw-bold">Ano</label>
                             <select name="ano" class="form-select" onchange="bloquearEFiltrar()">
                                 @for($i = date('Y') - 1; $i <= date('Y') + 1; $i++)
                                     <option value="{{ $i }}" {{ ($filtros['ano'] ?? date('Y')) == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -70,7 +70,7 @@
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold">Mês</label>
+                            <label class="form-label fw-bold">Mês</label>
                             <select name="mes" class="form-select" onchange="bloquearEFiltrar()">
                                 @for($m = 1; $m <= 12; $m++)
                                     <option value="{{ $m }}" {{ ($filtros['mes'] ?? date('m')) == $m ? 'selected' : '' }}>
@@ -81,7 +81,7 @@
                         </div>
                         
                        <div class="col-md-3">
-                            <label class="form-label fw-semibold">Filial</label>
+                            <label class="form-label fw-bold">Filial</label>
                             
                             @if(isset($restritoASuaFilial) && $restritoASuaFilial)
                                 <!-- Bloqueado para gerentes restritos -->
@@ -101,7 +101,7 @@
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold">Gerente</label>
+                            <label class="form-label fw-bold">Gerente</label>
                             @if($userContext['is_admin'] ?? false)
                             <select name="codsup" class="form-select" onchange="bloquearEFiltrar()">
                                 <option value="">Todos os Gerentes</option>
@@ -135,13 +135,14 @@
                 <span class="badge bg-light text-primary">Total: {{ count($vendedores) }}</span>
             </div>
 
-            <div class="card-body p-0">
-                <form method="POST" action="{{ route('metas.store') }}" id="form-salvar-metas">
-                    @csrf
-                    <input type="hidden" name="ano" value="{{ $filtros['ano'] ?? date('Y') }}">
-                    <input type="hidden" name="mes" value="{{ $filtros['mes'] ?? date('m') }}">
-                    <input type="hidden" name="codfil" value="{{ $filtros['codfil'] ?? '' }}">
-                    <input type="hidden" name="codsup" value="{{ $filtros['codsup'] ?? '' }}">
+          <form method="POST" action="{{ route('metas.store') }}" id="form-salvar-metas">
+            @csrf
+            <input type="hidden" name="usuario" value="{{ $usuario }}">
+            
+            <input type="hidden" name="ano" value="{{ $filtros['ano'] ?? date('Y') }}">
+            <input type="hidden" name="mes" value="{{ $filtros['mes'] ?? date('m') }}">
+            <input type="hidden" name="codfil" value="{{ $filtros['codfil'] ?? '' }}">
+            <input type="hidden" name="codsup" value="{{ $filtros['codsup'] ?? '' }}">
 
                     @php
                     $anoAtual = (int) date('Y');
@@ -340,5 +341,4 @@
         });
     </script>
 </body>
-
 </html>
