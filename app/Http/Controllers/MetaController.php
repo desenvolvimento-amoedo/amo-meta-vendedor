@@ -10,8 +10,9 @@ class MetaController extends Controller
     public function __construct(private MetaService $metaService) {}
 
     // Exibe a tela principal com os filtros e a listagem de vendedores
-    public function index(Request $request)
+    public function index(Request $request, $usuario)
     {
+        // dd($usuario);
         $userContext = $request->attributes->get('corporate_user');
         $isAdmin = $userContext['is_admin'] ?? false;
         $permissoes = $userContext['permissoes'] ?? [];
@@ -71,31 +72,28 @@ class MetaController extends Controller
                     $filialParaVerificar ? (int) $filialParaVerificar : null
                 );
                 
-                // Recarrega os vendedores para exibir os dados recém-gerados na grid
+            // Recarrega os vendedores para exibir os dados recém-gerados na grid
                 $vendedores = $this->metaService->listarVendedores($userContext, $filtros);
             }
         }
 
         return view(
             'metas.index',
-            compact('userContext', 'filtros', 'listas', 'vendedores', 'restritoASuaFilial')
+            compact('userContext', 'filtros', 'listas', 'vendedores', 'restritoASuaFilial', 'usuario')
         );
     }
 
-    /**
-     * Processa o salvamento em lote enviado pelo botão "Salvar Alterações"
-     */
-    public function store(Request $request)
+  public function store(Request $request)
     {
         $ano = (int) $request->input('ano');
         $mes = (int) $request->input('mes');
         $metasDigitadas = $request->input('metas', []);
 
         $userContext = $request->attributes->get('corporate_user');
-        $usuarioLogado = $userContext['username'] ?? 'sistema_metas';
 
         try {
-            $this->metaService->salvarMetasEmLote($ano, $mes, $metasDigitadas, $usuarioLogado);
+
+            $this->metaService->salvarMetasEmLote($ano, $mes, $metasDigitadas, $userContext);
             
             return redirect()
                 ->back()

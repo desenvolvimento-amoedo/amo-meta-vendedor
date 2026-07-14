@@ -49,7 +49,7 @@ class VendedorRepository implements VendedorRepositoryInterface
         $query = DB::connection('sqlsrv_gemco')->table('VEN_VEND as v')
             ->select( 
                 'v.CODVENDR',
-                'v.NOME as NOME',        
+                'v.NOME',        
                 'v.CODFILRH as CODFIL',  
                 'v.CODSUP',
                 'v.TPVENDR'
@@ -58,6 +58,7 @@ class VendedorRepository implements VendedorRepositoryInterface
             ->where('v.STATUS', 0)
             ->whereNotIn('v.CODFILRH', [9]); 
 
+            // vendedores ativos
         $query->where(function ($q) {
             $q->where(function($sub) {
                 $sub->where('v.TPVENDR', 4)
@@ -66,17 +67,20 @@ class VendedorRepository implements VendedorRepositoryInterface
             ->orWhere('v.CODFILRH', 5);
         });
             
+        // Traz os vendedores caso seja filtrada a filial
         if ($codfil) {
             $query->where('v.CODFILRH', $codfil);
         }
 
+        // Traz os vendedores caso seja filtrado o supervisor
         if ($codvendr) {
-            $filialDoGerente = DB::connection('sqlsrv_gemco')->table('VEN_VEND')
+            $gerente = DB::connection('sqlsrv_gemco')->table('VEN_VEND')
                 ->where('CODVENDR', (int) $codvendr)
-                ->value('CODFILRH');
+                ->first(['CODFILRH', 'CODVENDR']);
 
-            if ($filialDoGerente) {
-                $query->where('v.CODFILRH', $filialDoGerente);
+            if ($gerente) {
+                $query->where('v.CODFILRH', $gerente->CODFILRH)
+                      ->where('v.CODVENDR', '<>', $gerente->CODVENDR); 
             }
         }
 
@@ -86,12 +90,16 @@ class VendedorRepository implements VendedorRepositoryInterface
             return $vendedores;
         }
 
+        // Carregar somente o código dos vendedores dentro de um array
         $codigosVendedores = $vendedores->pluck('CODVENDR')->toArray();
 
+        // Busca as metas dos vendedores resultantes do filtro final
         $metas = DB::connection('sqlsrv_desenvolvimento')
             ->table('portal.dbo.AMO_META')
-            ->where('ANO', $ano)
-            ->where('MES', $mes)
+            ->where([
+                ['ANO', $ano],
+                ['MES', $mes]
+            ])
             ->whereIn('CODVENDR', $codigosVendedores)
             ->pluck('META', 'CODVENDR') 
             ->toArray();
@@ -99,7 +107,7 @@ class VendedorRepository implements VendedorRepositoryInterface
         foreach ($vendedores as $vendedor) {
             $vendedor->META = $metas[$vendedor->CODVENDR] ?? null;
         }
-
+        
         return $vendedores;
     }
 }

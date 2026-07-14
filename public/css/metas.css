@@ -49,16 +49,16 @@
     border: none;              /* Tira a borda dura padrão */
 }
 
-/* Título da caixa de Filtros */
+/* Título da caixa de Seleções */
 .card-header-filters {
-    background-color: #FF0000; /* FUNDO */
+    background-color: #000000; /* FUNDO */
     color: #ffffff;                /* TEXTO */
     font-weight: bold;
 }
 
 /* Título da caixa de Resultados (Vendedores Encontrados) */
 .card-header-results {
-    background-color: #FF0000; /* FUNDO: Amarelo Amoedo */
+    background-color: #000000; /* FUNDO */
     color: #ffffff;            /* TEXTO */
     font-weight: bold; 
     display: flex;
@@ -74,60 +74,71 @@
 
 /* --- 4. ÁREA DOS BOTÕES (Rodapé da Tabela) --- */
 .footer-actions {
-    padding: 1rem;             /* Espaçamento interno */
-    text-align: right;         /* Joga o botão de salvar para a direita */
-    background-color: #f8f9fa; /* FUNDO: Cinza bem clarinho */
-    border-top: 1px solid #b3b6b9; /* Linha separando a tabela do botão */
+   padding: 1rem;             /* Espaçamento interno */
+   text-align: right;         /* Joga o botão de salvar para a direita */
+   background-color: #f8f9fa; /* FUNDO */
+   border-top: 1px solid #b3b6b9; /* Linha separando a tabela do botão */
 }
 
-.btn-success {
-    padding: 0.375rem 3rem;    /* Deixa o botão mais larguinho */
-    font-weight: bold;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Sombra no botão */
-    background-color: #ffc107;  /* Cores do botão de salvar alterações */
-    color: #000000;  
-}
+/* --- 5. BOTÃO DE SALVAR AS ALTERAÇÕES --- */
+    .btn-action {
+        padding: 0.375rem 3rem !important;
+        font-weight: bold !important;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+        background-color: #ffc107 !important;
+        border-color: #000000 !important;
+        color: #000000 !important;
+        transition: none !important; 
+    }
+
+    .btn-action:hover,
+    .btn-action:focus,
+    .btn-action:active {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #000000 !important;
+        outline: none !important; 
+    }
 
 /* ---BOTÃO DE TRANSIÇÃO --- */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
+    .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    }
 
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
+    .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    }
 
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 34px;
-}
+    .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+    }
 
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
+    .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    }
 
-input:checked + .slider {
-  background-color: #ffc107; /* Cor do fundo do switch quando ativado: Amarelo Amoedo */
-}
+    input:checked + .slider {
+    background-color: #ffc107; /* Cor do fundo do switch quando ativado: Amarelo Amoedo */
+    }
 
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
+    input:checked + .slider:before {
+    transform: translateX(26px);
+    }
