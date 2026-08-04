@@ -93,11 +93,11 @@ class MetaController extends Controller
 
         try {
 
-            $this->metaService->salvarMetasEmLote($ano, $mes, $metasDigitadas, $userContext);
+            $this->metaService->salvarMetasEmLote($ano, $mes, $metasDigitadas, $userContext['username']);
             
             return redirect()
                 ->back()
-                ->with('success', 'Metas e histórico gravados com sucesso!');
+                ->with('success', 'Metas gravadas com sucesso!');
 
         } catch (\Throwable $e) {
             return redirect()

@@ -11,7 +11,7 @@ class VendedorRepository implements VendedorRepositoryInterface
     {
         $query = DB::connection('sqlsrv_gemco')->table('CAD_FILIAL')
             ->select('CAD_FILIAL.CODFIL', 'CAD_FILIAL.FANTASIA')
-            ->whereNotIn('CAD_FILIAL.CODFIL', [7, 9, 11, 15, 18, 19, 21, 23, 24, 25, 26, 27, 28, 29, 34, 35, 38])
+            ->whereNotIn('CAD_FILIAL.CODFIL', [7, 9, 11, 14, 15, 18, 19, 21, 23, 25, 26, 27, 28, 29, 34, 35, 38])
             ->distinct();
 
         if (!$isAdmin && $codgerente) {
@@ -49,7 +49,7 @@ class VendedorRepository implements VendedorRepositoryInterface
         $query = DB::connection('sqlsrv_gemco')->table('VEN_VEND as v')
             ->select( 
                 'v.CODVENDR',
-                'v.NOME',        
+                'v.NOME as NOME',        
                 'v.CODFILRH as CODFIL',  
                 'v.CODSUP',
                 'v.TPVENDR'
@@ -58,29 +58,27 @@ class VendedorRepository implements VendedorRepositoryInterface
             ->where('v.STATUS', 0)
             ->whereNotIn('v.CODFILRH', [9]); 
 
-            // vendedores ativos
         $query->where(function ($q) {
             $q->where(function($sub) {
                 $sub->where('v.TPVENDR', 4)
-                    ->whereNotNull('v.CODSUP');
+                    ->whereNotNull('v.CODSUP')
+                    ->where('v.CODSUP', '<>', 0);
+            
             })
             ->orWhere('v.CODFILRH', 5);
         });
             
-        // Traz os vendedores caso seja filtrada a filial
         if ($codfil) {
             $query->where('v.CODFILRH', $codfil);
         }
 
-        // Traz os vendedores caso seja filtrado o supervisor
         if ($codvendr) {
-            $gerente = DB::connection('sqlsrv_gemco')->table('VEN_VEND')
+            $filialDoGerente = DB::connection('sqlsrv_gemco')->table('VEN_VEND')
                 ->where('CODVENDR', (int) $codvendr)
-                ->first(['CODFILRH', 'CODVENDR']);
+                ->value('CODFILRH');
 
-            if ($gerente) {
-                $query->where('v.CODFILRH', $gerente->CODFILRH)
-                      ->where('v.CODVENDR', '<>', $gerente->CODVENDR); 
+            if ($filialDoGerente) {
+                $query->where('v.CODFILRH', $filialDoGerente);
             }
         }
 
@@ -90,24 +88,27 @@ class VendedorRepository implements VendedorRepositoryInterface
             return $vendedores;
         }
 
-        // Carregar somente o código dos vendedores dentro de um array
         $codigosVendedores = $vendedores->pluck('CODVENDR')->toArray();
 
-        // Busca as metas dos vendedores resultantes do filtro final
+        // Busca a META e a SUGESTAO na mesma consulta
         $metas = DB::connection('sqlsrv_desenvolvimento')
             ->table('portal.dbo.AMO_META')
-            ->where([
-                ['ANO', $ano],
-                ['MES', $mes]
-            ])
+            ->where('ANO', $ano)
+            ->where('MES', $mes)
             ->whereIn('CODVENDR', $codigosVendedores)
-            ->pluck('META', 'CODVENDR') 
-            ->toArray();
+            ->select('CODVENDR', 'META', 'SUGESTAO')
+            ->get()
+            ->keyBy('CODVENDR'); 
 
+        // Atribui os dois valores ao objeto do vendedor que vai para a tela
         foreach ($vendedores as $vendedor) {
-            $vendedor->META = $metas[$vendedor->CODVENDR] ?? null;
+            $dadosMeta = $metas->get($vendedor->CODVENDR);
+            
+            $vendedor->META = $dadosMeta->META ?? null;
+            $vendedor->SUGESTAO = $dadosMeta->SUGESTAO ?? null;
         }
-        
+
         return $vendedores;
+
     }
 }
